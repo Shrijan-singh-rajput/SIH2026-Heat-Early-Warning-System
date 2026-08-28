@@ -1,7 +1,7 @@
 // Core domain types for the Bhubaneswar Heat Early Warning System
 
 // Risk levels used throughout the system
-export type RiskLevel = 'low' | 'moderate' | 'high' | 'extreme';
+export type RiskLevel = 'low' | 'moderate' | 'high' | 'very_high' | 'extreme';
 
 // Thermal stress metrics
 export interface ThermalMetrics {

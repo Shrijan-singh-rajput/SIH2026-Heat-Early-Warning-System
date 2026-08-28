@@ -76,6 +76,21 @@ export const RISK_LEVELS: Record<RiskLevel, RiskLevelConfig> = {
     },
   },
 
+  very_high: {
+    id: 'very_high',
+    label: 'Very High Risk',
+    severity: 4,
+    description: 'Severe heat stress. Avoid outdoor activities. High-risk groups should remain indoors.',
+    urgency: 'critical',
+    colors: {
+      bg: 'bg-red-50',
+      text: 'text-red-700',
+      border: 'border-red-400',
+      mapFill: '#ef4444',
+      mapStroke: '#dc2626',
+    },
+  },
+
   extreme: {
     id: 'extreme',
     label: 'Extreme Risk',
@@ -83,9 +98,9 @@ export const RISK_LEVELS: Record<RiskLevel, RiskLevelConfig> = {
     description: 'Dangerous heat conditions. Emergency response may be required.',
     urgency: 'emergency',
     colors: {
-      bg: 'bg-red-50',
-      text: 'text-red-800',
-      border: 'border-red-300',
+      bg: 'bg-red-100',
+      text: 'text-red-900',
+      border: 'border-red-500',
       mapFill: '#dc2626',
       mapStroke: '#b91c1c',
     },
@@ -110,8 +125,9 @@ export function getRiskLevelsBySeverity(): RiskLevelConfig[] {
  * Determine risk level from severity score (0-100)
  */
 export function getRiskLevelFromScore(score: number): RiskLevel {
-  if (score >= 80) return 'extreme';
-  if (score >= 60) return 'high';
-  if (score >= 40) return 'moderate';
+  if (score >= 90) return 'extreme';
+  if (score >= 70) return 'very_high';
+  if (score >= 50) return 'high';
+  if (score >= 30) return 'moderate';
   return 'low';
 }
