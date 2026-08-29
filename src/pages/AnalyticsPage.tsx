@@ -1,18 +1,68 @@
-﻿const AnalyticsPage = () => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Heat Analytics & Trends</h1>
-        <p className="text-gray-600 dark:text-gray-400">Historical Analysis & Model Performance Metrics</p>
-      </div>
+﻿import { useMemo, useState } from 'react';
+import { useHealthAnalytics } from '../hooks/useHealthAnalytics';
+import { LoadingState, RiskLegend } from '../components/ui';
+import HealthAnalyticsHeader from '../components/health/HealthAnalyticsHeader';
+import CitywideHealthSummary from '../components/health/CitywideHealthSummary';
+import PopulationVulnerabilityOverview from '../components/health/PopulationVulnerabilityOverview';
+import HeatRelatedHealthImpact from '../components/health/HeatRelatedHealthImpact';
+import ThermalHealthRelationship from '../components/health/ThermalHealthRelationship';
+import VulnerablePopulationGroups from '../components/health/VulnerablePopulationGroups';
+import WardHealthSummary from '../components/health/WardHealthSummary';
+import WardHealthRiskTable from '../components/health/WardHealthRiskTable';
+import WardHealthDetailPanel from '../components/health/WardHealthDetailPanel';
+import HealthRiskTrend from '../components/health/HealthRiskTrend';
+import HealthPriorities from '../components/health/HealthPriorities';
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <h2 className="text-lg font-medium text-gray-900 mb-4 dark:text-gray-100">Thermal Trends & Vulnerability Analysis</h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Analytical views using Recharts for thermal metrics comparison, mortality risk correlation,
-          and vulnerability factors.
-        </p>
-      </div>
+/**
+ * AnalyticsPage — Heat Health Analytics.
+ *
+ * Answers: "How do heat conditions affect human health across the city?"
+ * and communicates the operational chain:
+ *   HEAT EXPOSURE → THERMAL STRESS → VULNERABILITY → HEALTH IMPACT
+ *
+ * This is a municipal/public-health OPERATIONAL analytics view — NOT a
+ * generic healthcare dashboard and NOT a medical application. It is presented
+ * as clearly labelled demonstration data until the backend analytics engine
+ * (`GET /api/v1/health-analytics`) is connected.
+ */
+const AnalyticsPage = () => {
+  const { data, isLoading } = useHealthAnalytics();
+  const [selectedZoneCode, setSelectedZoneCode] = useState<string | null>(null);
+
+  const wardHealth = useMemo(() => data?.wardHealth ?? [], [data]);
+  const selectedWard = useMemo(
+    () => wardHealth.find((ward) => ward.zoneCode === selectedZoneCode) ?? null,
+    [wardHealth, selectedZoneCode]
+  );
+
+  return (
+    <div className="space-y-6 max-w-7xl">
+      <HealthAnalyticsHeader metadata={data?.metadata ?? null} />
+
+      {isLoading ? (
+        <LoadingState message="Loading health analytics…" />
+      ) : data ? (
+        <>
+          <CitywideHealthSummary citywide={data.citywide} />
+          <PopulationVulnerabilityOverview vulnerability={data.vulnerability} />
+          <HeatRelatedHealthImpact impact={data.healthImpact} />
+          <ThermalHealthRelationship relationship={data.thermalHealthRelationship} />
+          <VulnerablePopulationGroups groups={data.vulnerableGroups} />
+
+          <WardHealthSummary wardHealth={wardHealth} />
+          <WardHealthRiskTable
+            wardHealth={wardHealth}
+            selectedZoneCode={selectedZoneCode}
+            onSelect={setSelectedZoneCode}
+          />
+          <WardHealthDetailPanel ward={selectedWard} onClear={() => setSelectedZoneCode(null)} />
+
+          <HealthRiskTrend trend={data.trend} />
+          <HealthPriorities priorities={data.priorities} />
+
+          <RiskLegend orientation="horizontal" showDescriptions />
+        </>
+      ) : null}
     </div>
   );
 };

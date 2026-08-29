@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
 
   // Health risk
   HEALTH_RISK_PREDICTION: '/health/risk-prediction',
+  HEALTH_ANALYTICS: '/health-analytics',
 
   // Recommendations
   RECOMMENDATIONS: '/recommendations',

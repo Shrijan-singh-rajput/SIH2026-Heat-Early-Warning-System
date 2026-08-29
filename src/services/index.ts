@@ -6,3 +6,4 @@ export * from './alertService';
 export * from './riskZoneService';
 export * from './demoForecastService';
 export * from './demoWardRiskService';
+export * from './demoHealthAnalyticsService';
