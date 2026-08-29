@@ -83,7 +83,7 @@ const Sidebar = () => {
                 Public Access
               </p>
             </div>
-            <NavItem to={ROUTES.CITIZEN} icon={<Users />} label="Citizen Heat Safety" />
+            <NavItem to={ROUTES.CITIZEN_SAFETY} icon={<Users />} label="Citizen Heat Safety" />
           </div>
         </nav>
 

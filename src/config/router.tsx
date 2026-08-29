@@ -7,7 +7,7 @@ import WardsPage from '../pages/WardsPage';
 import WardDetailPage from '../pages/WardDetailPage';
 import AnalyticsPage from '../pages/AnalyticsPage';
 import AlertsPage from '../pages/AlertsPage';
-import CitizenPage from '../pages/CitizenPage';
+import CitizenSafetyPage from '../pages/CitizenSafetyPage';
 import SettingsPage from '../pages/SettingsPage';
 import { ROUTES } from '../types/routes';
 
@@ -48,9 +48,9 @@ export const router = createBrowserRouter([
         path: ROUTES.ALERTS,
         element: <AlertsPage />,
       },
-      {
-        path: ROUTES.CITIZEN,
-        element: <CitizenPage />,
+{
+        path: ROUTES.CITIZEN_SAFETY,
+        element: <CitizenSafetyPage />,
       },
       {
         path: ROUTES.SETTINGS,

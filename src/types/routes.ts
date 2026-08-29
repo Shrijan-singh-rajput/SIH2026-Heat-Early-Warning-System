@@ -8,7 +8,7 @@ export const ROUTES = {
   WARD_DETAIL: '/wards/:zoneCode',
   ANALYTICS: '/analytics',
   ALERTS: '/alerts',
-  CITIZEN: '/citizen',
+  CITIZEN_SAFETY: '/citizen-safety',
   SETTINGS: '/settings',
 } as const;
 
