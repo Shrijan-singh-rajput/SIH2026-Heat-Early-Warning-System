@@ -15,34 +15,34 @@ interface HealthImpactProps {
  */
 const HealthImpact = ({ impact }: HealthImpactProps) => {
   return (
-    <Card className="bg-purple-50 border-purple-200">
-      <h2 className={`${TYPOGRAPHY.sectionTitle} mb-4 text-purple-900`}>
+    <Card className="bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800">
+      <h2 className={`${TYPOGRAPHY.sectionTitle} mb-4 text-purple-900 dark:text-purple-200`}>
         Human Health Impact
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Vulnerability Score */}
         <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center">
-            <Heart className="h-6 w-6 text-purple-600" aria-hidden="true" />
+          <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center dark:bg-purple-900/50">
+            <Heart className="h-6 w-6 text-purple-600 dark:text-purple-300" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-medium text-purple-700 uppercase tracking-wide">
+            <p className="text-xs font-medium text-purple-700 uppercase tracking-wide dark:text-purple-300">
               Vulnerability Score
             </p>
-            <p className="text-2xl font-bold text-purple-900">
-              {impact.vulnerabilityScore}<span className="text-base font-normal text-purple-600">/100</span>
+            <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+              {impact.vulnerabilityScore}<span className="text-base font-normal text-purple-600 dark:text-purple-300">/100</span>
             </p>
           </div>
         </div>
 
         {/* Mortality Risk */}
         <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-md flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 text-red-600" aria-hidden="true" />
+          <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-md flex items-center justify-center dark:bg-red-900/50">
+            <TrendingUp className="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-medium text-red-700 uppercase tracking-wide">
+            <p className="text-xs font-medium text-red-700 uppercase tracking-wide dark:text-red-300">
               Mortality Risk
             </p>
             <RiskBadge level={impact.mortalityRisk} size="md" />
@@ -51,11 +51,11 @@ const HealthImpact = ({ impact }: HealthImpactProps) => {
 
         {/* Hospitalization Risk */}
         <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-md flex items-center justify-center">
-            <Building2 className="h-6 w-6 text-orange-600" aria-hidden="true" />
+          <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-md flex items-center justify-center dark:bg-orange-900/50">
+            <Building2 className="h-6 w-6 text-orange-600 dark:text-orange-400" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-medium text-orange-700 uppercase tracking-wide">
+            <p className="text-xs font-medium text-orange-700 uppercase tracking-wide dark:text-orange-300">
               Hospitalization Risk
             </p>
             <RiskBadge level={impact.hospitalizationRisk} size="md" />
@@ -64,21 +64,21 @@ const HealthImpact = ({ impact }: HealthImpactProps) => {
 
         {/* Population Exposed */}
         <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center">
-            <Users className="h-6 w-6 text-purple-600" aria-hidden="true" />
+          <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center dark:bg-purple-900/50">
+            <Users className="h-6 w-6 text-purple-600 dark:text-purple-300" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-medium text-purple-700 uppercase tracking-wide">
+            <p className="text-xs font-medium text-purple-700 uppercase tracking-wide dark:text-purple-300">
               Population Exposed
             </p>
-            <p className="text-2xl font-bold text-purple-900">
+            <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
               ~{(impact.populationExposed / 1000).toFixed(0)}k
             </p>
           </div>
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-purple-700 italic">
+      <p className="mt-4 text-xs text-purple-700 italic dark:text-purple-300">
         Demonstration scenario values
       </p>
     </Card>

@@ -31,19 +31,19 @@ const ActiveAlerts = ({ alerts }: ActiveAlertsProps) => {
         {alerts.map((alert) => (
           <div
             key={alert.id}
-            className="border-l-4 border-l-red-500 bg-red-50 p-3 rounded-r-md"
+            className="border-l-4 border-l-red-500 bg-red-50 p-3 rounded-r-md dark:bg-red-950/30"
           >
             <div className="flex items-start justify-between mb-2">
               <RiskBadge level={alert.severity} size="sm" />
-              <span className="text-xs text-gray-600">{alert.issuedAt}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{alert.issuedAt}</span>
             </div>
-            <p className="text-sm font-semibold text-gray-900 mb-1">{alert.area}</p>
-            <p className="text-sm text-gray-700">{alert.message}</p>
+            <p className="text-sm font-semibold text-gray-900 mb-1 dark:text-gray-100">{alert.area}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{alert.message}</p>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 text-xs text-gray-500 italic">
+      <p className="mt-3 text-xs text-gray-500 italic dark:text-gray-400">
         Demonstration alerts
       </p>
     </Card>

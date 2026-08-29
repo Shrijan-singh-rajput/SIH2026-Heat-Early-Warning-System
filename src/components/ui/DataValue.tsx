@@ -37,17 +37,17 @@ const DataValue = ({
     : HEALTH_METRICS[metric as HealthMetricKey];
 
   if (value === null || value === undefined) {
-    return <span className={`text-gray-400 ${className}`}>—</span>;
+    return <span className={`text-gray-400 dark:text-gray-500 ${className}`}>—</span>;
   }
 
   const formattedValue = value.toFixed(config.decimalPlaces);
 
   return (
     <span className={className}>
-      {showLabel && <span className="text-gray-600">{config.label}: </span>}
+      {showLabel && <span className="text-gray-600 dark:text-gray-400">{config.label}: </span>}
       <span className="font-semibold">{formattedValue}</span>
       {showUnit && config.unit && (
-        <span className="ml-1 text-sm text-gray-500">{config.unit}</span>
+        <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">{config.unit}</span>
       )}
     </span>
   );

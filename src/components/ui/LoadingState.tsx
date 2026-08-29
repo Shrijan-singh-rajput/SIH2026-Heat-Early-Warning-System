@@ -18,7 +18,7 @@ const LoadingState = ({
   className = '',
 }: LoadingStateProps) => {
   const containerClasses = fullPage
-    ? 'flex items-center justify-center min-h-screen bg-gray-50'
+    ? 'flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950'
     : 'flex items-center justify-center py-12';
 
   return (
@@ -45,7 +45,7 @@ const LoadingState = ({
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           />
         </svg>
-        <p className={`mt-4 ${TYPOGRAPHY.body} text-gray-600`}>{message}</p>
+        <p className={`mt-4 ${TYPOGRAPHY.body} text-gray-600 dark:text-gray-400`}>{message}</p>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ import TopBar from '../components/navigation/TopBar';
  */
 const AppLayout = () => {
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden dark:bg-gray-950">
       {/* Navigation Sidebar (Desktop + Mobile drawer) */}
       <Sidebar />
 

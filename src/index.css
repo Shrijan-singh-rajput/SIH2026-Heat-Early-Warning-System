@@ -1,3 +1,59 @@
 ﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Global accessibility / theme support classes.
+ *
+ * These classes are applied to the document root by AccessibilityProvider and
+ * complement the Tailwind dark: variants (which rely on the `dark` class).
+ */
+
+/* ------------------------------------------------------------------ */
+/* Reduced Motion                                                      */
+/* Applies when the user preference OR the system prefers reduced motion */
+/* ------------------------------------------------------------------ */
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* High Contrast Mode                                                  */
+/* Strengthens borders and focus indicators so elements remain         */
+/* distinguishable without relying on subtle colour differences.       */
+/* ------------------------------------------------------------------ */
+.high-contrast {
+  --tw-border-opacity: 1;
+}
+
+.high-contrast * {
+  border-width: max(1px, var(--tw-border-width, 1px));
+}
+
+.high-contrast :focus-visible {
+  outline-width: 3px;
+  outline-offset: 2px;
+  outline-color: #2563eb;
+}
+
+.high-contrast .dark :focus-visible {
+  outline-color: #60a5fa;
+}
+
+/* In high contrast, ensure cards and panels have stronger separation */
+.high-contrast .rounded-lg,
+.high-contrast .rounded-md,
+.high-contrast .rounded {
+  border-color: rgba(100, 116, 139, 0.8);
+}
+
+/* ------------------------------------------------------------------ */
+/* Colour Vision - Red-Green / Blue-Yellow                             */
+/* RiskBadge and RiskLegend already swap palettes via config, but      */
+/* reinforce non-colour cues for status dots / indicators here.        */
+/* ------------------------------------------------------------------ */

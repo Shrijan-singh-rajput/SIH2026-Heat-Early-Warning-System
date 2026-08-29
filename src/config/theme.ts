@@ -113,29 +113,29 @@ export const HEALTH_METRICS = {
  */
 export const TYPOGRAPHY = {
   // Page titles
-  pageTitle: 'text-2xl font-bold text-gray-900',
+  pageTitle: 'text-2xl font-bold text-gray-900 dark:text-gray-50',
 
   // Section headers
-  sectionTitle: 'text-lg font-semibold text-gray-900',
-  sectionSubtitle: 'text-sm font-medium text-gray-600',
+  sectionTitle: 'text-lg font-semibold text-gray-900 dark:text-gray-100',
+  sectionSubtitle: 'text-sm font-medium text-gray-600 dark:text-gray-400',
 
   // Card/component headers
-  cardTitle: 'text-base font-semibold text-gray-900',
-  cardSubtitle: 'text-sm text-gray-600',
+  cardTitle: 'text-base font-semibold text-gray-900 dark:text-gray-100',
+  cardSubtitle: 'text-sm text-gray-600 dark:text-gray-400',
 
   // Data display
-  metricValue: 'text-3xl font-bold text-gray-900',
-  metricLabel: 'text-sm font-medium text-gray-600 uppercase tracking-wide',
-  metricUnit: 'text-lg font-normal text-gray-500',
+  metricValue: 'text-3xl font-bold text-gray-900 dark:text-gray-50',
+  metricLabel: 'text-sm font-medium text-gray-600 uppercase tracking-wide dark:text-gray-400',
+  metricUnit: 'text-lg font-normal text-gray-500 dark:text-gray-400',
 
   // Body text
-  body: 'text-sm text-gray-700',
-  bodyLarge: 'text-base text-gray-700',
-  bodySmall: 'text-xs text-gray-600',
+  body: 'text-sm text-gray-700 dark:text-gray-300',
+  bodyLarge: 'text-base text-gray-700 dark:text-gray-300',
+  bodySmall: 'text-xs text-gray-600 dark:text-gray-400',
 
   // Interactive elements
   button: 'text-sm font-medium',
-  link: 'text-sm font-medium text-blue-600 hover:text-blue-800',
+  link: 'text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300',
 
   // Status/Badge text
   badge: 'text-xs font-semibold uppercase tracking-wide',
@@ -171,9 +171,9 @@ export const SPACING = {
  * Card/Container Styles
  */
 export const CARD = {
-  base: 'bg-white rounded-lg border border-gray-200 shadow-sm',
+  base: 'bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700',
   hover: 'hover:shadow-md transition-shadow duration-200',
-  interactive: 'cursor-pointer hover:border-gray-300 hover:shadow-md transition-all duration-200',
+  interactive: 'cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200',
   padding: 'p-6',
   paddingSm: 'p-4',
   paddingLg: 'p-8',
@@ -192,9 +192,9 @@ export const BUTTON = {
 
   // Variants
   primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500',
-  outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
-  ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
+  outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+  ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-200 dark:hover:bg-gray-700',
   danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
 } as const;
 
@@ -204,23 +204,23 @@ export const BUTTON = {
  */
 export const STATUS = {
   online: {
-    bg: 'bg-green-100',
-    text: 'text-green-800',
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    text: 'text-green-800 dark:text-green-300',
     dot: 'bg-green-500',
   },
   warning: {
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-800',
+    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+    text: 'text-yellow-800 dark:text-yellow-300',
     dot: 'bg-yellow-500',
   },
   error: {
-    bg: 'bg-red-100',
-    text: 'text-red-800',
+    bg: 'bg-red-100 dark:bg-red-900/40',
+    text: 'text-red-800 dark:text-red-300',
     dot: 'bg-red-500',
   },
   offline: {
-    bg: 'bg-gray-100',
-    text: 'text-gray-600',
+    bg: 'bg-gray-100 dark:bg-gray-700',
+    text: 'text-gray-600 dark:text-gray-300',
     dot: 'bg-gray-400',
   },
 } as const;
@@ -266,21 +266,21 @@ export const SHADOW = {
  */
 export const HEALTH_COLOR_SCHEMES = {
   purple: {
-    bg: 'bg-purple-50',
-    text: 'text-purple-900',
-    border: 'border-purple-200',
+    bg: 'bg-purple-50 dark:bg-purple-950/40',
+    text: 'text-purple-900 dark:text-purple-300',
+    border: 'border-purple-200 dark:border-purple-800',
     accent: 'bg-purple-600',
   },
   red: {
-    bg: 'bg-red-50',
-    text: 'text-red-900',
-    border: 'border-red-200',
+    bg: 'bg-red-50 dark:bg-red-950/40',
+    text: 'text-red-900 dark:text-red-300',
+    border: 'border-red-200 dark:border-red-800',
     accent: 'bg-red-600',
   },
   orange: {
-    bg: 'bg-orange-50',
-    text: 'text-orange-900',
-    border: 'border-orange-200',
+    bg: 'bg-orange-50 dark:bg-orange-950/40',
+    text: 'text-orange-900 dark:text-orange-300',
+    border: 'border-orange-200 dark:border-orange-800',
     accent: 'bg-orange-600',
   },
 } as const;

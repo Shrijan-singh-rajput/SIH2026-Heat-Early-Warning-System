@@ -12,7 +12,7 @@ interface EnvironmentalMetricsProps {
 const EnvironmentalMetrics = ({ metrics }: EnvironmentalMetricsProps) => {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Environmental Conditions</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4 dark:text-gray-100">Environmental Conditions</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Temperature"

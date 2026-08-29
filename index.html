@@ -5,6 +5,34 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bhubaneswar Heat Early Warning System</title>
+    <script>
+      // Apply saved theme / colour-vision before React mounts to avoid a
+      // flash of the wrong theme. Keys must match src/config/accessibility.ts.
+      (function () {
+        try {
+          var root = document.documentElement;
+          var theme = localStorage.getItem('heat-ews-theme');
+          var colorVision = localStorage.getItem('heat-ews-color-vision');
+          var reducedMotion = localStorage.getItem('heat-ews-reduced-motion');
+
+          var effectiveDark =
+            theme === 'dark' ||
+            ((theme === null || theme === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+          root.classList.toggle('dark', effectiveDark);
+
+          if (colorVision === 'redGreen') root.classList.add('color-blind-rg');
+          if (colorVision === 'blueYellow') root.classList.add('color-blind-by');
+          if (colorVision === 'highContrast') root.classList.add('high-contrast');
+
+          var systemReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reducedMotion === 'true' || systemReducedMotion) root.classList.add('reduced-motion');
+        } catch (e) {
+          // localStorage unavailable; default styles apply
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

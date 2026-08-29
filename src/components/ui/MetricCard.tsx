@@ -36,10 +36,10 @@ const MetricCard = ({
   className = '',
 }: MetricCardProps) => {
   const colorClasses = {
-    default: 'bg-white',
-    purple: 'bg-purple-50 border-purple-200',
-    red: 'bg-red-50 border-red-200',
-    orange: 'bg-orange-50 border-orange-200',
+    default: 'bg-white dark:bg-gray-800',
+    purple: 'bg-purple-50 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800',
+    red: 'bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800',
+    orange: 'bg-orange-50 border-orange-200 dark:bg-orange-950/40 dark:border-orange-800',
   }[colorScheme];
 
   return (
@@ -59,20 +59,20 @@ const MetricCard = ({
               <span
                 className={`text-xs font-medium ${
                   trend.value > 0
-                    ? 'text-red-600'
+                    ? 'text-red-600 dark:text-red-400'
                     : trend.value < 0
-                    ? 'text-green-600'
-                    : 'text-gray-600'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
                 {trend.value > 0 ? '↑' : trend.value < 0 ? '↓' : '→'} {Math.abs(trend.value)}
               </span>
-              <span className="text-xs text-gray-600">{trend.label}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{trend.label}</span>
             </div>
           )}
         </div>
         {icon && (
-          <div className="ml-4 flex-shrink-0 text-gray-400">{icon}</div>
+          <div className="ml-4 flex-shrink-0 text-gray-400 dark:text-gray-500">{icon}</div>
         )}
       </div>
     </Card>

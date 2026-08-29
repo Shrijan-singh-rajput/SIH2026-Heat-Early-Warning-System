@@ -39,29 +39,29 @@ const ForecastSummary = ({ forecast }: ForecastSummaryProps) => {
         {forecast.map((day) => (
           <div
             key={day.date}
-            className="border border-gray-200 rounded-md p-3 hover:border-gray-300 transition-colors"
+            className="border border-gray-200 rounded-md p-3 hover:border-gray-300 transition-colors dark:border-gray-700 dark:hover:border-gray-600"
           >
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 dark:text-gray-400">
               {day.dayLabel}
             </p>
             <RiskBadge level={day.risk} size="sm" className="mb-2" />
             <div className="space-y-1">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 <span className="font-medium">UTCI:</span> {day.utci.toFixed(1)}°C
               </p>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 <span className="font-medium">Temp:</span> {day.temperature.toFixed(1)}°C
               </p>
               <div className="flex items-center space-x-1 mt-2">
                 {getTrendIcon(day.vulnerabilityTrend)}
-                <span className="text-xs text-gray-600 capitalize">{day.vulnerabilityTrend}</span>
+                <span className="text-xs text-gray-600 capitalize dark:text-gray-400">{day.vulnerabilityTrend}</span>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 text-xs text-gray-500 italic">
+      <p className="mt-3 text-xs text-gray-500 italic dark:text-gray-400">
         Demonstration forecast — not actual predictions
       </p>
     </Card>
