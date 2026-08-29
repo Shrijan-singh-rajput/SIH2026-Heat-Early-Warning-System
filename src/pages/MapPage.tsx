@@ -1,20 +1,85 @@
-﻿const MapPage = () => {
+﻿import { useMemo, useState } from 'react';
+import { TYPOGRAPHY } from '../config/theme';
+import { useAccessibility } from '../context/AccessibilityContext';
+import { useRiskZones } from '../hooks/useRiskZones';
+import type { MapLayerId, RiskZoneFeature } from '../types/mapTypes';
+import { DemoDataNotice, LoadingState, RiskLegend } from '../components/ui';
+import HeatRiskMap from '../components/map/HeatRiskMap';
+import MapRiskSummary from '../components/map/MapRiskSummary';
+import SelectedZonePanel from '../components/map/SelectedZonePanel';
+
+/**
+ * MapPage - Live Heat Map
+ *
+ * Primary GIS / spatial view for the Bhubaneswar Heat Early Warning System.
+ * Answers: "Which areas of Bhubaneswar are currently at greater human
+ * thermal-stress risk?"
+ *
+ * IMPORTANT: All map values are DEMONSTRATION DATA ONLY. The backend
+ * (PostGIS → GET /api/risk-zones) does not exist yet.
+ */
+const MapPage = () => {
+  const { data, isLoading, isDemo, scenario } = useRiskZones();
+  const { colorVision, effectiveTheme } = useAccessibility();
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [layerId, setLayerId] = useState<MapLayerId>('heatRisk');
+
+  const features = useMemo(() => data?.features ?? [], [data]);
+  const selected = useMemo(
+    () => features.find((feature) => feature.id === selectedId) ?? null,
+    [features, selectedId]
+  );
+
+  const handleSelectZone = (feature: RiskZoneFeature | null) => {
+    setSelectedId(feature?.id ?? null);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">GIS Heat Risk Map</h1>
-        <p className="text-gray-600 dark:text-gray-400">Hyper-Local Ward Level Heat Vulnerability Map</p>
+        <h1 className={TYPOGRAPHY.pageTitle}>Live Heat Map</h1>
+        <p className="mt-1 text-base text-gray-600 dark:text-gray-400">
+          Hyper-local human thermal stress and heat-health risk across Bhubaneswar.
+        </p>
+        {isDemo && (
+          <DemoDataNotice
+            scenario={scenario}
+            assessmentPeriod={data?.metadata.assessmentPeriod}
+          />
+        )}
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <h2 className="text-lg font-medium text-gray-900 mb-4 dark:text-gray-100">Interactive Heat Map</h2>
-        <p className="text-gray-600 mb-4 dark:text-gray-400">
-          GIS-based visualization using Leaflet for ward/zone-level heat risk mapping across Bhubaneswar.
-        </p>
-        <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:bg-gray-900 dark:border-gray-600">
-          <p className="text-gray-500 font-medium dark:text-gray-400">GIS Map Component Placeholder</p>
-        </div>
-      </div>
+      {isLoading ? (
+        <LoadingState message="Loading heat-risk zones…" />
+      ) : (
+        <>
+          {/* Citywide summary */}
+          <MapRiskSummary features={features} />
+
+          {/* Map + Selected-zone panel */}
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <HeatRiskMap
+              features={features}
+              layerId={layerId}
+              onLayerChange={setLayerId}
+              selectedId={selectedId}
+              onSelectZone={handleSelectZone}
+              mode={colorVision}
+              theme={effectiveTheme}
+            />
+            <SelectedZonePanel
+              zones={features}
+              selected={selected}
+              onSelect={handleSelectZone}
+            />
+          </div>
+
+          {/* Full five-level risk reference (accessible, document flow) */}
+          <RiskLegend orientation="horizontal" />
+        </>
+      )}
     </div>
   );
 };

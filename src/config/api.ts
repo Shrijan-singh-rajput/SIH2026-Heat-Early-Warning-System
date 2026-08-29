@@ -15,6 +15,9 @@ export const API_ENDPOINTS = {
   // Dashboard
   DASHBOARD_SUMMARY: '/dashboard/summary',
 
+  // Live Heat Map (future backend milestone — see riskZoneService)
+  RISK_ZONES: '/risk-zones',
+
   // Wards
   WARDS_LIST: '/wards',
   WARD_DETAIL: (zoneCode: string) => `/wards/${zoneCode}`,

@@ -57,3 +57,62 @@
 /* RiskBadge and RiskLegend already swap palettes via config, but      */
 /* reinforce non-colour cues for status dots / indicators here.        */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/* Leaflet map integration                                             */
+/* Keeps the Live Heat Map readable in Light/Dark/High-Contrast modes. */
+/* ------------------------------------------------------------------ */
+
+.leaflet-container {
+  background: #eef2f7;
+  font-family: inherit;
+}
+
+.dark .leaflet-container {
+  background: #0f172a;
+}
+
+/* Popups: match the application surface / theme */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 6px;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+}
+
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .leaflet-popup-close-button {
+  color: #9ca3af;
+}
+
+/* Dark-mode zoom bar */
+.dark .leaflet-bar a {
+  background: #1f2937;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
+.dark .leaflet-bar a:hover,
+.dark .leaflet-bar a:focus {
+  background: #374151;
+  color: #ffffff;
+}
+
+/* Attribution chips stay legible on both basemaps */
+.leaflet-control-attribution {
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #475569;
+}
+
+.dark .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.75);
+  color: #94a3b8;
+}

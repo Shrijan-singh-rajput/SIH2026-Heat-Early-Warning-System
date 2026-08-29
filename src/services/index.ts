@@ -3,3 +3,4 @@ export { default as apiClient } from './apiClient';
 export * from './wardService';
 export * from './forecastService';
 export * from './alertService';
+export * from './riskZoneService';

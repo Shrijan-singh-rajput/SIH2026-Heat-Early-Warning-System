@@ -83,4 +83,5 @@ export const QUERY_KEYS = {
   ALERTS: 'alerts',
   ANALYTICS: 'analytics',
   RECOMMENDATIONS: 'recommendations',
+  RISK_ZONES: 'risk-zones',
 } as const;
