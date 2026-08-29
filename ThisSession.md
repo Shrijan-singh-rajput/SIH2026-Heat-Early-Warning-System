@@ -361,3 +361,173 @@ The page was rebuilt as a composition of dedicated modular components under a ne
 5. **Verification results:** build passes; lint 0 errors / 4 pre-existing warnings; dev server + headless Chrome render verified all sections and no regressions on other routes.
 6. **Remaining limitations:** demonstration data only; no automated visual testing; separate demo datasets for page/dashboard/map; real backend endpoints reserved.
 7. **Recommended next feature:** Health Analytics page (`/analytics`) — trend/vulnerability analytics is the natural continuation and can reuse the forecast/dashboard data conventions; a shared fixtures module (or the real API) should then converge the separate demo datasets.
+
+---
+
+# Session — Ward Risk
+
+**Date:** 2026-08-30
+**Working directory:** `C:\Users\Saranya\OneDrive\Desktop\SIH2026\frontend`
+**Scope:** Implement the complete Ward Risk module/page at `/wards` for PS83 (Bhubaneswar Heat Early Warning System) — answering "which wards are most at risk, why, who is vulnerable, and what action to prioritise" — using demonstration data only.
+
+---
+
+## 1. What existed when the session started
+
+- Full theme system (Light/Dark/System), four colour-vision modes (Default / Red-Green Safe / Blue-Yellow Safe / High Contrast), high contrast, reduced motion, persistence (`src/config/accessibility.ts`, `src/context/AccessibilityContext.tsx`).
+- Centralised risk system (`src/config/riskConfig.ts`) with all five levels (LOW, MODERATE, HIGH, VERY HIGH, EXTREME), severity 1–5, per-mode presentation; `RiskBadge` / `RiskLegend` (text + icon + colour, never colour alone).
+- Design tokens (`src/config/theme.ts`), reusable UI (`Card`, `Badge`, `DataValue`, `MetricCard`, `RiskBadge`, `RiskLegend`, `DemoDataNotice`, `SectionHeader`, `StatusIndicator`, `Button`, `LoadingState`, `EmptyState`).
+- Completed Dashboard (`/dashboard`), Live Heat Map (`/map`), Detailed 5-Day Forecast (`/forecast`), Settings (`/settings`) — all with the demo-data convention (`DemoDataNotice`).
+- Charting library **Recharts** (installed, used by the Forecast thermal chart).
+- Route `/wards` (`ROUTES.WARDS`) already existed and pointed at a **placeholder** `src/pages/WardsPage.tsx`. Sidebar "Ward Risk" nav item already present.
+- Real-API service `src/services/wardService.ts` (axios/`API_ENDPOINTS.WARDS_LIST`) existed but was untouched by the front end.
+- Demo data existed for dashboard (`demoDashboardData.ts`, `WardRisk` type, wards W01–W08) and map (`demoMapData.ts`, risk zones W01–W12 with five-level coverage). Cross-page convention: zone codes `BBSR-W0x`/`BBSR-W1x`, names "Ward xx".
+- Pattern established by the Forecast module: `types/forecastTypes.ts` → `data/demoForecastData.ts` → `services/demoForecastService.ts` → `hooks/useForecast.ts` → `utils/forecastUtils.ts` → `components/forecast/*` → composed page.
+
+## 2. ThisSession.md was read first
+
+Yes — read completely before any implementation, and the documented architecture was confirmed against source before writing code.
+
+## 3. What was inspected
+
+`router.tsx`, `WardsPage.tsx` (placeholder), `ForecastPage.tsx`, `riskConfig.ts`, `theme.ts`, `api.ts`, `constants.ts`, `routes.ts`, `accessibility.ts`, `AccessibilityContext.tsx`, `types/index.ts`, `types/forecastTypes.ts`, `types/mapTypes.ts`, `demoForecastData.ts`, `demoDashboardData.ts`, `demoMapData.ts`, `riskZoneService.ts`, `demoForecastService.ts`, `wardService.ts`, `useForecast.ts`, `useRiskZones.ts`, `forecastUtils.ts`, `mapUtils.ts`, `appStore.ts`, all `components/ui/*`, `components/forecast/*` (chart + recommendations patterns), `components/map/*` (SelectedZonePanel, MapRiskSummary), `components/dashboard/WardRiskSummary.tsx` + `DashboardHeader.tsx`, `MapPage.tsx`, package.json.
+
+## 4. What was implemented
+
+The complete Ward Risk page at `/wards`, replacing the placeholder `WardsPage.tsx`, following the forecast module's data → service → hook → utils → components → page architecture. It answers the operational question (which wards, why, who's vulnerable, what action) with clearly labelled demonstration data.
+
+## 5. Files created
+
+- `src/types/wardTypes.ts` — `WardTrend`, `WardThermalStress`, `WardEnvironmental`, `WardVulnerability`, `WardRiskEntry`, `WardRiskMetadata`, `WardRiskCollection`.
+- `src/data/demoWardRiskData.ts` — `DEMO_WARD_RISKS` (12 wards W01–W12, all five levels, values aligned with the map/dashboard).
+- `src/services/demoWardRiskService.ts` — `fetchDemoWardRisks()` with simulated latency + commented backend implementation.
+- `src/hooks/useWardRisk.ts` — `useWardRisk()` hook (data / isLoading / isDemo / scenario).
+- `src/utils/wardRiskUtils.ts` — `TREND_ARROWS`, `WardCounts`, `countWardRiskLevels`, `countWardsAtOrAbove`, `WardRiskSummaryInfo`, `summarizeWardRisks`, `WardSortKey`, `compareWards`, `WARD_SORT_LABELS` (reuses `RISK_SEVERITY` / `TREND_LABELS` from `forecastUtils`).
+- `src/components/wards/WardRiskHeader.tsx`
+- `src/components/wards/WardRiskSummary.tsx` (citywide summary)
+- `src/components/wards/RiskDistribution.tsx` (Recharts bar chart over the five levels + data table)
+- `src/components/wards/WardFilterControls.tsx` (search / risk filter / sort controls)
+- `src/components/wards/WardRiskTable.tsx` (operational table with selection)
+- `src/components/wards/WardDetailPanel.tsx` (selected ward identity/risk/action + "View on Heat Map")
+- `src/components/wards/WardThermalStress.tsx` (UTCI/WBGT/Heat Index/MRT with risk badges)
+- `src/components/wards/WardVulnerability.tsx` (vulnerability score, exposed/vulnerable population, mortality/hospitalization/concern badges)
+- `src/components/wards/WardRecommendations.tsx` (risk-consistent recommendation cards)
+
+## 6. Files modified
+
+- `src/pages/WardsPage.tsx` — placeholder replaced with the fully composed page.
+- `src/services/index.ts` — exported `demoWardRiskService`.
+
+## 7. Components created
+
+As listed above: `WardRiskHeader`, `WardRiskSummary`, `RiskDistribution`, `WardFilterControls`, `WardRiskTable`, `WardDetailPanel`, `WardThermalStress`, `WardVulnerability`, `WardRecommendations`.
+
+## 8. Components reused
+
+`Card`, `Badge`, `DataValue`, `DemoDataNotice`, `RiskBadge`, `RiskLegend`, `SectionHeader`, `EmptyState`, `LoadingState`; risk presentation via `getRiskConfig` / `getRiskPresentation` / `getDefaultDarkClasses`; trend helpers via `forecastUtils` (`RISK_SEVERITY`, `TREND_LABELS`); reduced-motion via `getSystemReducedMotion`; Recharts (already installed).
+
+## 9. Routes added / updated
+
+- No route changes required. `/wards` (`ROUTES.WARDS`) already routed to `WardsPage`; the placeholder was replaced in place. No existing routes broken (all routes return 200).
+
+## 10. Data model created / updated
+
+`WardRiskCollection { metadata, wards }` where `WardRiskEntry` carries `zoneCode`, `name`, `risk` (5-level), `trend`, `thermal` (utci/wbgt/heatIndex + per-metric risk + meanRadiantTemp), `environmental` (temperature/humidity/windSpeed), `vulnerability` (score, populationExposed, vulnerablePopulation, mortalityRisk, hospitalizationRisk, heatHealthConcern), and `recommendedAction`. Aligned with the existing `Ward` type and the map's `RiskZoneProperties` naming so backend integration is a straight swap.
+
+## 11. Demo data architecture
+
+Follows the forecast module exactly: `demoWardRiskData.ts` (data) → `demoWardRiskService.ts` (fetch) → `useWardRisk.ts` (hook) → `wardRiskUtils.ts` (pure helpers). The service returns the demo payload after ~250 ms simulated latency and contains the commented backend implementation using `API_ENDPOINTS.WARDS_LIST` (`/wards`). Metadata marks `isDemo: true` with an explicit "Illustrative data … NOT official" source string. Ward names/zone codes/risk/utci/vulnerability/population deliberately match `demoMapData.ts` and `demoDashboardData.ts` for cross-page consistency. Demo notice uses the shared `DemoDataNotice`.
+
+## 12. Filtering / sorting functionality
+
+`WardFilterControls` (all keyboard-accessible native controls): free-text search on name/zoneCode; risk-level filter dropdown that includes ALL five levels + "All levels"; sort-by dropdown (Ward, Risk, UTCI, WBGT, Temperature, Vulnerability, Population Exposed) with an ascending/descending toggle button. Verified by headless CDP interaction: EXTREME filter → Ward 03 only; VERY HIGH filter → W01 + W07; search "Ward 12" → Ward 12 only. All five levels are available as filter options.
+
+## 13. Selected ward functionality
+
+Clicking or keyboard-activating a table row selects it (toggle). Selection is indicated by a 2px blue border + background + an explicit "Selected" text label in the Action column and `aria-selected` — never colour alone. The detail panel shows name, zone code, risk `RiskBadge` + description, recommended action, and a "View on Heat Map" action. Thermal stress and vulnerability sections render for the selected ward, and recommendations are regenerated specifically for it.
+
+## 14. Live Heat Map integration
+
+A "View on Heat Map" action in the selected-ward `WardDetailPanel` navigates to `ROUTES.MAP` (the existing Live Heat Map). No map changes were made and nothing was broken. Deep-linking a specific ward into the map is NOT yet supported (the map owns its own selection state); this is documented as a future integration point below.
+
+## 15. Dashboard integration
+
+No Dashboard changes were required. The existing Dashboard `WardRiskSummary` already links "View All Wards" to `ROUTES.WARDS` (`/wards`), and it continues to work. Ward values are consistent between Dashboard / Map / Ward Risk because the demo data shares the same ward names and code conventions.
+
+## 16. Accessibility implementation
+
+Uses the existing `AccessibilityContext`. Risk is never colour-only: every risk value uses `RiskBadge` (text + icon + colour). Table rows are keyboard focusable (`tabIndex={0}`, Enter/Space selects) with `aria-selected`. All filter controls have visible labels and are native `<input>`/`<select>`/`<button>` elements. The chart has a `<figure>` + explanatory `<figcaption>`, explicit count labels on bars, a text legend via the accompanying data table with mode-aware swatches, and exact-value tooltips. Trend is shown with text + arrow. `DemoDataNotice` uses `role="status"`. Selected states add visible text, not colour alone.
+
+## 17. Dark mode behaviour
+
+All new components use the app's `dark:` variants and `TYPOGRAPHY`/`CARD` tokens. Table, cards, badges, the chart (axis/grid/tick colours switch with `effectiveTheme`), filter controls, selected states and the demo notice all adapt to the dark theme. No hardcoded colors were introduced for surfaces.
+
+## 18. Red-Green Safe behaviour
+
+Risk swatches/badges/chart bar fills are all computed through `getRiskPresentation(config, colorVision)` (existing system) — Default / Red-Green Safe / Blue-Yellow Safe / High Contrast change presentation automatically. Nothing new was introduced; risk remains identifiable by text + icon + colour in RG mode.
+
+## 19. Blue-Yellow Safe behaviour
+
+Same as above — `getRiskPresentation` handles the `blueYellow` palette for risk swatches, badges and chart fills. No competing palette was added.
+
+## 20. High Contrast behaviour
+
+All risk presentation uses the `hc*` classes from `riskConfig` (strong black/white separation). The chart draws with `strokeWidth = 3` in high-contrast mode (same as the Forecast chart). Selection is communicated by text + border, and all critical information is available as text, so it remains readable under strong borders/focus indicators.
+
+## 21. Reduced Motion behaviour
+
+Chart animation is disabled when (`reducedMotion` OR system `prefers-reduced-motion`) via `isAnimationActive={!effectiveReducedMotion}` using the existing pattern from the Forecast page. No decorative animation was added anywhere.
+
+## 22. Responsive behaviour
+
+Page is `max-w-7xl` matching Dashboard/Forecast. Citywide summary: `sm:grid-cols-2 xl:grid-cols-4`. Detail thermal/vulnerability: `lg:grid-cols-2` (stacks on mobile). Table scrolls horizontally inside its own `overflow-x-auto` container with `min-w-[880px]` (no page-level overflow — confirmed `scrollWidth === clientWidth` on a 758px viewport). Filter controls: `sm:2 / lg:4` columns, stack on mobile. Buttons/rows remain tappable.
+
+## 23. Five-level risk handling
+
+The full five-level hierarchy is preserved throughout — summary tiles, the risk-distribution chart (five bars), the filter options (all five), the table `RiskBadge`s, the detail panel, vulnerability risk rows, and the document-flow `RiskLegend` (horizontal) all use the centralised `riskConfig`. No simplification to four levels.
+
+## 24. VERY HIGH preserved
+
+Confirmed. VERY HIGH is a distinct level: present in the demo data (W01, W07), the summary, a distinct bar in the distribution chart, an available filter option (`very_high`), and distinct `RiskBadge`s. Headless verification: `VERY HIGH` badge text present, and `very_high` filter returns exactly W01 + W07.
+
+## 25. EXTREME preserved
+
+Confirmed. EXTREME is a distinct level: present in the demo data (W03), summary, chart, filter option (`extreme`), and `RiskBadge`. Headless verification: `EXTREME` badge text present, and the `extreme` filter returns exactly Ward 03.
+
+## 26. Backend integration points
+
+1. `src/hooks/useWardRisk.ts` + `src/services/demoWardRiskService.ts` — swap `fetchDemoWardRisks()` for `GET api/v1/wards` (endpoint `API_ENDPOINTS.WARDS_LIST` already exists; commented axios shape present). No page/component changes required (`WardRiskCollection` is the contract).
+2. `src/types/wardTypes.ts` is the response shape; harmonise backend field names to it.
+3. The recommendations section currently derives guidance client-side from risk level + vulnerability — replace/augment with the backend rules-engine `/recommendations` response when available.
+4. Keep the "backend not connected" demo notice until the API is live; `isDemo`/`scenario` flow from metadata.
+5. **Heat Map deep-linking (future):** to pre-select a ward on `/map`, add a query/route param to `MapPage` and initialise `selectedId` from it. Not implemented so as not to risk the map; documented here.
+
+## 27. Build result
+
+`npm run build` → **passes** (`tsc -b && vite build`, no TS errors). Only the pre-existing >500 kB chunk-size advisory remains (leaflet + recharts bundle).
+
+## 28. Lint result
+
+`npm run lint` → **0 errors, 4 warnings** — all pre-existing (`AccessibilityContext` ×3 provider/set-state-in-effect, `RiskBadge` ×1 dynamic icon). New ward code adds **0** warnings.
+
+## 29. Browser/manual/headless verification actually performed
+
+- `npm run build` and `npm run lint` run to completion.
+- Dev server booted; HTTP 200 for `/wards` and all other routes (`/dashboard`, `/map`, `/forecast`, `/settings`, `/analytics`, `/alerts`, `/citizen`).
+- **Headless Chrome (new headless via CDP) smoke test** of `/wards`:
+  - Page fully renders (header, demo notice, citywide summary, Risk Distribution bar chart via `recharts-wrapper`, Ward Risk Table, placeholder "Selected Ward" panel, five-level `RiskLegend`).
+  - All 12 wards (BBSR-W01…W12) render in the table.
+  - All five risk levels present as badges/labels: LOW, MODERATE, HIGH, VERY HIGH, EXTREME.
+  - Interactive click on Ward 03 (EXTREME) selects it and renders the detail panel with thermal stress, vulnerability/population exposure, "View on Heat Map", ward-specific recommendations and the EXTREME badge.
+  - Filtering verified: EXTREME → Ward 03; VERY HIGH → W01 + W07; search "Ward 12" → Ward 12. Filter dropdown contains all five levels.
+  - No page-level horizontal overflow (`scrollWidth === clientWidth` on a 758px-wide viewport).
+- Light/dark/colour-vision/high-contrast/reduced-motion behaviour was reasoned from the shared config/CSS paths (as in prior sessions) — no automated pixel tests exist in the repo.
+
+## 30. Remaining limitations
+
+- **Demonstration data only** — not live/official; never present as real BMC ward statistics.
+- No automated visual/pixel tests in the repo (headless DOM + CDP smoke tests used manually).
+- Ward Risk page, Dashboard and Map still use **separate** demo datasets (kept consistent by hand). A future shared fixture or the real API should be the single source of truth.
+- Map deep-linking of a selected ward from the Ward Risk page is a documented future integration point, not implemented.
+- The recommendations are client-side rules of thumb until the backend rules engine is connected.
+- `src/services/wardService.ts` (real API) remains unused by the page — intentionally kept for the backend milestone.
