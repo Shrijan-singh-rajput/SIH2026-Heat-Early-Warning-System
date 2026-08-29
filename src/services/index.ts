@@ -4,3 +4,4 @@ export * from './wardService';
 export * from './forecastService';
 export * from './alertService';
 export * from './riskZoneService';
+export * from './demoForecastService';

@@ -233,3 +233,131 @@ Passes. Lint result: 0 errors / 4 pre-existing warnings.
 3. `src/hooks/useRiskZones.ts` — swap the source; optionally move to React Query (`useQuery` + `QUERY_KEYS.RISK_ZONES`) for caching/refetch.
 4. Polygons remain valid for real ward GeoJSON; only the geometry coordinates and properties change.
 5. If live refresh is added later, an "updated at" timestamp from the API should be displayed explicitly (do not fabricate).
+
+---
+
+# Session — Detailed 5-Day Forecast
+
+**Date:** 2026-08-29
+**Working directory:** `C:\Users\Saranya\OneDrive\Desktop\SIH2026\frontend`
+**Scope:** Implement the detailed 5-Day Heat Risk Forecast page (`/forecast`) as an operational municipal dashboard for PS83 (Bhubaneswar Heat EWS), answering "what is the expected heat stress and health risk over the next 5 days?" — using demonstration data only.
+
+---
+
+## What was already present when I started (audit)
+
+- Full theme system (Light/Dark/System), four colour-vision modes (Default / Red-Green Safe / Blue-Yellow Safe / High Contrast), high contrast, reduced motion, persistence (`src/config/accessibility.ts`, `src/context/AccessibilityContext.tsx`).
+- Centralised risk system (`src/config/riskConfig.ts`) with **all five levels** (LOW, MODERATE, HIGH, VERY HIGH, EXTREME), severity 1–5, thresholds, per-mode presentation palettes; `RiskBadge` / `RiskLegend` (text + icon + colour, never colour alone).
+- Design tokens (`src/config/theme.ts`), reusable UI (`Card`, `Badge`, `DataValue`, `MetricCard`, `RiskBadge`, `RiskLegend`, `DemoDataNotice`, `SectionHeader`, `StatusIndicator`, `Button`, state components).
+- Dashboard with demo data (`src/data/demoDashboardData.ts`), Live Heat Map (`/map` — `mapTypes`/`demoMapData`/`riskZoneService`/`useRiskZones`), demo-notice convention (`DemoDataNotice`, used by `DashboardHeader`).
+- Route `/forecast` (in `src/config/router.tsx`) already pointed at a **placeholder** `src/pages/ForecastPage.tsx`; sidebar "5-Day Forecast" nav item already present.
+- **Recharts `^3.10.1` was already installed** in `package.json` (with no chart code yet). Leaflet/react-leaflet also present.
+- Existing real-API service `src/services/forecastService.ts` (uses axios/`API_ENDPOINTS.FORECAST_MULTI_DAY`) — deliberately left untouched.
+
+## What I inspected
+
+`ThisSession.md`, `package.json`, `tsconfig.app.json`, `.oxlintrc.json`, `riskConfig.ts`, `theme.ts`, `api.ts`, `constants.ts`, `router.tsx`, `accessibility.ts`, `AccessibilityContext.tsx`, `types/index.ts`, `types/routes.ts`, `types/mapTypes.ts`, `demoDashboardData.ts`, `riskZoneService.ts`, `useRiskZones.ts`, `forecastService.ts`, `apiClient.ts`, `services/index.ts`, all `components/ui/*`, all `components/dashboard/*`, `MapPage.tsx`, `DashboardPage.tsx`, `Sidebar.tsx`, `AppLayout.tsx`, `index.css`, `main.tsx`, `tailwind.config.js`. Verified lucide-react icon availability at runtime.
+
+## What I implemented
+
+The page was rebuilt as a composition of dedicated modular components under a new `src/components/forecast/` folder, following the requested hierarchy (header → demo notice → summary → 5-day overview → thermal stress → environmental → health/vulnerability → risk trend → recommendations → legend).
+
+### Files created
+
+- `src/types/forecastTypes.ts` — forecast domain types: `ForecastTrend`, `ForecastDayEnvironmental`, `ForecastThermalStress`, `ForecastHealthOutlook`, `ForecastDay` (dayLabel, ISO date, weekday, overall `risk`, per-step `trend`, environmental/thermal/health sub-objects), `ForecastRecommendationCategory`, `ForecastRecommendation`, `ForecastMetadata`, `ForecastCollection`. Designed to mirror a future `GET /api/v1/forecast/multi-day?days=5` response (`API_ENDPOINTS.FORECAST_MULTI_DAY` already exists in `src/config/api.ts`).
+- `src/data/demoForecastData.ts` — `DEMO_FORECAST_DATA`: a **clearly labelled** demonstration 5-day scenario (2026-08-29 → 2026-09-02) consistent with the dashboard demo scenario (Day 1 HIGH → Day 4 EXTREME peak → Day 5 easing). Each day carries environmental (°C/%/m/s/W/m² + Mean Radiant Temp), thermal (UTCI/WBGT/Heat Index with per-metric `RiskLevel`), health (vulnerability score, population exposed, mortality/hospitalization risk, heat-health concern, advisory) and a per-step trend. Seven demo recommendations span all six categories. Metadata marks `isDemo: true`; source = "Illustrative demonstration data — not an official forecast".
+- `src/services/demoForecastService.ts` — `fetchDemoForecast()` returning the demo payload after ~250 ms simulated latency (mirrors `riskZoneService`); contains commented future implementation using `apiClient` + `API_ENDPOINTS.FORECAST_MULTI_DAY`.
+- `src/hooks/useForecast.ts` — `useForecast()` (data / isLoading / isDemo / scenario), mirroring `useRiskZones`. Single swap point for the backend.
+- `src/utils/forecastUtils.ts` — pure helpers: `RISK_SEVERITY` ordering (1–5), `TREND_LABELS`, `formatDayDate` (TZ-safe formatting from the ISO string — no `Date` parsing), `getStepTrend`, `countDaysAtOrAbove`, `countRiskLevels` (all five levels), `summarizeForecast` (peak day, first HIGH day, VERY HIGH+ preparedness window, per-level day counts, trend + prose trajectory).
+- `src/components/forecast/ForecastHeader.tsx` — page title "5-Day Heat Risk Forecast", subtitle "Bhubaneswar • Human Thermal Stress & Health Risk Outlook", and the shared `DemoDataNotice` (section 2).
+- `src/components/forecast/ForecastSummary.tsx` — "Overall 5-Day Forecast Risk" headline `RiskBadge` (lg) + description/urgency, plus three operational tiles: **Peak Heat-Stress Day** (CalendarClock icon + date + badge), **Elevated-Risk Days** (counts for High / Very High / Extreme — all five-level hierarchy preserved), **Trend Direction** (text + icon + prose).
+- `src/components/forecast/FiveDayForecastCards.tsx` — one card per day (Day 1–5): date, overall `RiskBadge`, Temperature/UTCI/WBGT/Heat Index via `DataValue`, trend chip **vs previous day** (icon + "vs Day n" + "Rising/Stable/Easing" text), vulnerability + population-exposed footer.
+- `src/components/forecast/ThermalStressForecast.tsx` — **Recharts** `LineChart` (UTCI violet solid, WBGT orange dashed, Heat Index red solid thicker, Mean Radiant Temp slate dotted — line *styles*, legend and a data table so metrics are never colour-only), theme-aware grid/axis colours, custom theme-aware tooltip with exact values + units, `isAnimationActive={false}` when reduced motion is effective, thicker strokes in high contrast; followed by a full **data table** (Day, UTCI+risk badge, WBGT+risk badge, Heat Index+risk badge, MRT) for exact values and DOM/screen-reader access. Explicit "Demonstration thermal-stress values" caption.
+- `src/components/forecast/EnvironmentalForecast.tsx` — compact responsive table with explicit units (°C, %, m/s, W/m²) plus Mean Radiant Temperature, icon-labelled column headers, `overflow-x-auto` wrapper (no page-level horizontal overflow).
+- `src/components/forecast/HealthForecast.tsx` — five purple-health-scheme cards (Vulnerability /100, Population Exposed, Mortality Risk badge, Hospitalization Risk badge, Heat-Health Concern badge, advisory). Caption explicitly states demo indicators, not clinical diagnoses.
+- `src/components/forecast/RiskTrend.tsx` — horizontal step strip: Day 1 → Day 2 → … → Day 5 with per-step `RiskBadge` and connector arrows labelled "Rising / Stable / Easing" (text + icons + colour); three callouts: **Peak-Risk Day**, **First HIGH-Risk Day**, **Increased Preparedness Window** (VERY HIGH+). `overflow-x-auto` on small screens.
+- `src/components/forecast/ForecastRecommendations.tsx` — recommendations grouped under six labelled categories (Public Health, Outdoor Activity, Water & Cooling, Emergency Preparedness, Communication, Vulnerable Population Protection) with action + detail, and a caption marking them as demonstration until the rules engine is connected.
+
+### Files modified
+
+- `src/pages/ForecastPage.tsx` — placeholder replaced with the full composed page (max-w-7xl, loading state via `LoadingState`, all sections + existing `RiskLegend orientation="horizontal" showDescriptions`).
+- `src/services/index.ts` — exported `demoForecastService`.
+
+### Route / navigation
+
+- No route changes needed: `/forecast` (existing `ROUTES.FORECAST`) already routed to `ForecastPage`; sidebar "5-Day Forecast" nav item unchanged. No existing routes broken.
+
+## Chart library status
+
+- **Recharts was already installed** (`recharts ^3.10.1`). **No new dependencies were added.** Uses `LineChart`, `Line`, `XAxis`, `YAxis`, `CartesianGrid`, `Tooltip` (custom), `Legend`, `ResponsiveContainer`. Axis/grid/tick colours adapt to dark/light; animation disabled under effective reduced motion; series colours match the dashboard's visual grammar.
+
+## Accessibility considerations
+
+- Risk is never communicated by colour alone: every risk value uses `RiskBadge` (text label + icon + colour that switches per colour-vision mode via `getRiskPresentation`).
+- Chart has a `<figure>` with an explanatory `<figcaption>`, a legend with text names, exact-value tooltips, and an accompanying data table (also the DOM/screen-reader representation).
+- Line colours are duplicated in text (legend + table + tooltips); line styles (solid/dash/dotted) differentiate the series further; high-contrast mode draws thicker strokes.
+- Custom tooltip uses app-surface colours for contrast.
+- `DemoDataNotice` uses `role="status"`; demonstration-data markers appear throughout the UI text.
+
+## Dark mode / colour-vision / high-contrast / reduced-motion considerations
+
+- All new components use the app's `dark:` variants and `TYPOGRAPHY` tokens.
+- Chart colours were chosen to remain readable on both light and dark card surfaces; grid/axis/tick colours switch with `effectiveTheme`.
+- Colour-vision modes: risk swatches/badges are computed through `getRiskPresentation(config, colorVision)` (existing system) — nothing new introduced.
+- High contrast: charts get `strokeWidth=3`; all content remains available as text.
+- Reduced motion: chart animation disabled when (`reducedMotion` OR system `prefers-reduced-motion`) is active; no decorative animation was added anywhere.
+
+## Responsive behaviour
+
+- Desktop: `max-w-7xl` page; summary is a 2-column card (`minmax(0,280px)_1fr`); day cards `sm:2 / lg:3 / xl:5`; recommendations `sm:2 / lg:3`.
+- Tablet: grids reflow to 2–3 columns.
+- Mobile: single column; tables wrapped in `overflow-x-auto` with `min-w` on the table itself; RiskTrend strip scrolls horizontally; chart container uses `min-w-0`; no fixed widths that would push the page beyond the viewport.
+
+## Demonstration-data limitations
+
+- All forecast values are fictional/illustrative; dates align to the existing demo dashboard window only for cross-page consistency.
+- No live timestamps, sensor readings, API responses, backend-connection states, or government statistics are fabricated. Metadata `isDemo: true` and source strings make this explicit.
+- UTCI/WBGT/Heat Index numeric risk labels (e.g. HI 54.2 → EXTREME) are demonstration thresholds, not official classifications.
+
+## Backend integration points
+
+1. `src/hooks/useForecast.ts` + `src/services/demoForecastService.ts` — swap `fetchDemoForecast()` for `GET api/v1/forecast/multi-day?days=5` (endpoint + commented axios shape already present). No page/component changes required (`ForecastCollection` is the contract).
+2. `src/types/forecastTypes.ts` is the response shape; harmonise backend field names to it.
+3. The recommendations section currently renders static demo objects — replace/augment with the backend rules-engine `/recommendations` response when available.
+4. Keep the "backend not connected" demo notice until the API is live; `isDemo`/`scenario` already flow from data → UI.
+
+## Build result
+
+- `npm run build` → **passes** (`tsc -b && vite build`, no TS errors). Only the pre-existing >500 kB chunk-size advisory (leaflet + recharts bundle).
+
+## Lint result
+
+- `npm run lint` → **0 errors, 4 warnings** — all pre-existing (`AccessibilityContext` ×3 provider/set-state-in-effect, `RiskBadge` ×1 dynamic icon). New forecast code adds **0** warnings.
+
+## Manual / UI verification performed
+
+- Dev server booted and served HTTP 200 for `/forecast` plus all routes (`/dashboard`, `/map`, `/settings`, `/wards`, `/analytics`, `/alerts`, `/citizen`).
+- All 14 new/modified modules transformed via Vite (200s).
+- Headless Chrome `--dump-dom` render of `/forecast`: header, demo notice, summary tiles, 5-day overview, thermal chart (`recharts-surface` × 5; all four series strokes `#7c3aed`/`#ea580c`/`#dc2626`/`#64748b`), environmental + health tables/cards, risk trend strip, recommendations, and the five-level RiskLegend all present; 15 "demonstration/illustrative" markers found; no error screen.
+- `/dashboard` re-rendered headlessly after the refactor — intact.
+- Light/dark/colour-vision/high-contrast/reduced-motion behaviour was reasoned from the shared config/CSS paths — no automated pixel tests exist in the repo.
+
+## Remaining limitations
+
+- Demonstration data only — not live/official.
+- No automated visual/pixel tests in the repo (headless DOM smoke test used manually, as in the map session).
+- Forecast page, dashboard and map use **separate** demo datasets (kept consistent by hand). A future shared fixture or the real API should be the single source of truth.
+- `src/services/forecastService.ts` (axios, real endpoints) remains unused by the page — intentionally kept for the backend milestone.
+- Chart tooltip is pointer-driven; exact values are also available in the data table below for keyboard/SR users.
+
+---
+
+## Summary
+
+1. **Files created (13):** `src/types/forecastTypes.ts`, `src/data/demoForecastData.ts`, `src/services/demoForecastService.ts`, `src/hooks/useForecast.ts`, `src/utils/forecastUtils.ts`, and 8 components under `src/components/forecast/` (`ForecastHeader.tsx`, `ForecastSummary.tsx`, `FiveDayForecastCards.tsx`, `ThermalStressForecast.tsx`, `EnvironmentalForecast.tsx`, `HealthForecast.tsx`, `RiskTrend.tsx`, `ForecastRecommendations.tsx`).
+2. **Files modified (2):** `src/pages/ForecastPage.tsx` (placeholder → full page), `src/services/index.ts` (export demo service).
+3. **Features completed:** Detailed `/forecast` page with header + demo notice, forecast summary (full five-level risk model), 5-day overview cards, Recharts thermal-stress chart + data table, environmental forecast table, health/vulnerability outlook, risk trend/escalation, operational recommendations, and the existing five-level RiskLegend — all accessible, theme-aware and responsive.
+4. **Dependencies added:** none (Recharts was already installed).
+5. **Verification results:** build passes; lint 0 errors / 4 pre-existing warnings; dev server + headless Chrome render verified all sections and no regressions on other routes.
+6. **Remaining limitations:** demonstration data only; no automated visual testing; separate demo datasets for page/dashboard/map; real backend endpoints reserved.
+7. **Recommended next feature:** Health Analytics page (`/analytics`) — trend/vulnerability analytics is the natural continuation and can reuse the forecast/dashboard data conventions; a shared fixtures module (or the real API) should then converge the separate demo datasets.
