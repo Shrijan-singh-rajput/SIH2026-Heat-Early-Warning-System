@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDataMode } from '../context/DataModeContext';
 import { fetchRiskZones } from '../services/riskZoneService';
 import type { RiskZoneFeatureCollection } from '../types/mapTypes';
-
+import { fetchRiskZonesFromApi } from '../services/riskZoneService';
 /**
  * useRiskZones — data hook for the Live Heat Map.
  *
@@ -34,7 +34,10 @@ export function useRiskZones() {
           if (active) setIsLoading(false);
         });
     } else {
-      setIsLoading(false);
+      fetchRiskZonesFromApi()
+        .then((result) => { if (active) setData(result); })
+        .catch((error) => console.error('Failed to load risk zones:', error))
+        .finally(() => { if (active) setIsLoading(false); });
     }
 
     return () => {

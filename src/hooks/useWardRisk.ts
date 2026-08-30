@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDataMode } from '../context/DataModeContext';
 import { fetchDemoWardRisks } from '../services/demoWardRiskService';
 import type { WardRiskCollection } from '../types/wardTypes';
-
+import { wardService } from '../services/wardService';
 /**
  * useWardRisk — data hook for the Ward Risk page.
  *
@@ -34,7 +34,10 @@ export function useWardRisk() {
           if (active) setIsLoading(false);
         });
     } else {
-      setIsLoading(false);
+      wardService.getWards()
+        .then((result: any) => { if (active) setData(result); })
+        .catch((error: any) => console.error('Failed to load ward risk:', error))
+        .finally(() => { if (active) setIsLoading(false); });
     }
 
     return () => {

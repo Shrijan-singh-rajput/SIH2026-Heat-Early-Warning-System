@@ -12,34 +12,11 @@ export const API_CONFIG = {
 
 // API endpoint paths
 export const API_ENDPOINTS = {
-  // Dashboard
-  DASHBOARD_SUMMARY: '/dashboard/summary',
-
-  // Live Heat Map (future backend milestone — see riskZoneService)
+  ZONES: '/zones',
+  ZONE_CURRENT_RISK: (zoneCode: string) => `/zones/${zoneCode}/current-risk`,
+  ZONE_FORECAST: (zoneCode: string) => `/zones/${zoneCode}/forecast`,
+  FORECAST: '/forecast',
+  VULNERABILITY: '/vulnerability',
   RISK_ZONES: '/risk-zones',
-
-  // Wards
-  WARDS_LIST: '/wards',
-  WARD_DETAIL: (zoneCode: string) => `/wards/${zoneCode}`,
-  WARD_FORECAST: (zoneCode: string) => `/wards/${zoneCode}/forecast`,
-
-  // Forecasts
-  CITY_FORECAST: '/forecast/city',
-  FORECAST_MULTI_DAY: '/forecast/multi-day',
-
-  // Alerts
-  ALERTS_ACTIVE: '/alerts/active',
-  ALERTS_HISTORY: '/alerts/history',
-  ALERT_DETAIL: (alertId: string) => `/alerts/${alertId}`,
-
-  // Analytics
-  ANALYTICS_TRENDS: '/analytics/trends',
-  ANALYTICS_VULNERABILITY: '/analytics/vulnerability',
-
-  // Health risk
-  HEALTH_RISK_PREDICTION: '/health/risk-prediction',
-  HEALTH_ANALYTICS: '/health-analytics',
-
-  // Recommendations
-  RECOMMENDATIONS: '/recommendations',
+  ALERTS: '/alerts',
 } as const;

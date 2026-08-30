@@ -1,30 +1,30 @@
 import apiClient from './apiClient';
 import { API_ENDPOINTS } from '../config/api';
-import type { Alert, ApiResponse } from '../types';
+import { mapAlertOutToAlert } from '../utils/apiMappers';
 
-// Alert service functions
 export const alertService = {
-  // Get active alerts
-  getActiveAlerts: async (): Promise<Alert[]> => {
-    const response = await apiClient.get<ApiResponse<Alert[]>>(
-      API_ENDPOINTS.ALERTS_ACTIVE
-    );
-    return response.data.data;
+  // Fetches ALL alerts from the backend (only endpoint that exists)
+  getAllAlerts: async () => {
+    const { data } = await apiClient.get(API_ENDPOINTS.ALERTS);
+    return data.map(mapAlertOutToAlert);
   },
 
-  // Get alert history
-  getAlertHistory: async (): Promise<Alert[]> => {
-    const response = await apiClient.get<ApiResponse<Alert[]>>(
-      API_ENDPOINTS.ALERTS_HISTORY
-    );
-    return response.data.data;
+  // "Active" = derived client-side, not a separate backend call
+  getActiveAlerts: async () => {
+    const all = await alertService.getAllAlerts();
+    return all.filter((a: any) => a.isActive);
   },
 
-  // Get alert detail
-  getAlertDetail: async (alertId: string): Promise<Alert> => {
-    const response = await apiClient.get<ApiResponse<Alert>>(
-      API_ENDPOINTS.ALERT_DETAIL(alertId)
-    );
-    return response.data.data;
+  // "History" = also derived client-side (everything, active or not)
+  getAlertHistory: async () => {
+    return alertService.getAllAlerts();
+  },
+
+  // "Detail" = find by id from the same full list
+  getAlertDetail: async (alertId: string) => {
+    const all = await alertService.getAllAlerts();
+    const found = all.find((a: any) => a.id === alertId);
+    if (!found) throw new Error(`Alert ${alertId} not found`);
+    return found;
   },
 };

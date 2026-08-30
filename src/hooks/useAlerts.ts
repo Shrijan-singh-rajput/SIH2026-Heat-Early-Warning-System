@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { useDataMode } from '../context/DataModeContext';
 import { demoAlertService } from '../services/demoAlertService';
 import type { AlertCollection } from '../data/demoAlertData';
-
+import { alertService } from '../services/alertService';
 /**
  * useAlerts — data hook for the Alerts page.
  *
@@ -42,8 +42,21 @@ export function useAlerts() {
           if (active) setIsLoading(false);
         });
     } else {
-      // Real mode — backend not connected
-      setIsLoading(false);
+      alertService.getActiveAlerts()
+        .then((result: any) => {
+          if (!active) return;
+          setData({
+            metadata: {
+              scenario: 'Live Backend Data',
+              assessmentPeriod: 'Current',
+              isDemo: false,
+              source: 'Bhubaneswar Heat EWS API',
+            },
+            alerts: result,
+          });
+        })
+        .catch((error: any) => console.error('Failed to load alerts:', error))
+        .finally(() => { if (active) setIsLoading(false); });
     }
 
     return () => {

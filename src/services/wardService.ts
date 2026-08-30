@@ -1,30 +1,18 @@
 import apiClient from './apiClient';
 import { API_ENDPOINTS } from '../config/api';
-import type { Ward, WardForecast, ApiResponse } from '../types';
+import { mapZoneToWard } from '../utils/apiMappers';
 
-// Ward service functions
 export const wardService = {
-  // Get all wards
-  getWards: async (): Promise<Ward[]> => {
-    const response = await apiClient.get<ApiResponse<Ward[]>>(
-      API_ENDPOINTS.WARDS_LIST
-    );
-    return response.data.data;
+  getWards: async () => {
+    const { data } = await apiClient.get(API_ENDPOINTS.ZONES);
+    return data.map((z: any) => mapZoneToWard(z));
   },
-
-  // Get ward detail by zone code
-  getWardDetail: async (zoneCode: string): Promise<Ward> => {
-    const response = await apiClient.get<ApiResponse<Ward>>(
-      API_ENDPOINTS.WARD_DETAIL(zoneCode)
-    );
-    return response.data.data;
+  getWardCurrentRisk: async (zoneCode: string) => {
+    const { data } = await apiClient.get(API_ENDPOINTS.ZONE_CURRENT_RISK(zoneCode));
+    return data;
   },
-
-  // Get ward forecast
-  getWardForecast: async (zoneCode: string): Promise<WardForecast> => {
-    const response = await apiClient.get<ApiResponse<WardForecast>>(
-      API_ENDPOINTS.WARD_FORECAST(zoneCode)
-    );
-    return response.data.data;
+  getWardForecast: async (zoneCode: string) => {
+    const { data } = await apiClient.get(API_ENDPOINTS.ZONE_FORECAST(zoneCode));
+    return data;
   },
 };
