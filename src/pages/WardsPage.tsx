@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { useWardRisk } from '../hooks/useWardRisk';
-import { LoadingState, RiskLegend } from '../components/ui';
+import { LoadingState, EmptyState, RiskLegend } from '../components/ui';
 import WardRiskHeader from '../components/wards/WardRiskHeader';
 import WardRiskSummary from '../components/wards/WardRiskSummary';
 import RiskDistribution from '../components/wards/RiskDistribution';
@@ -16,11 +16,12 @@ import WardRecommendations from '../components/wards/WardRecommendations';
  * Answers: "Which wards are currently most at risk, why are they at risk,
  * which populations are vulnerable, and what action should be prioritised?"
  *
- * IMPORTANT: All values are DEMONSTRATION DATA ONLY (demoWardRiskData.ts).
- * The backend (GET /api/v1/wards) does not exist yet.
+ * Uses DataModeContext via useWardRisk hook:
+ * - Demo mode: simulated ward risk data
+ * - Real mode: "Awaiting Backend" placeholder
  */
 const WardsPage = () => {
-  const { data, isLoading } = useWardRisk();
+  const { data, isLoading, isDemo } = useWardRisk();
   const [selectedZoneCode, setSelectedZoneCode] = useState<string | null>(null);
 
   const wards = useMemo(() => data?.wards ?? [], [data]);
@@ -53,7 +54,14 @@ const WardsPage = () => {
           <WardRecommendations ward={selectedWard} />
           <RiskLegend orientation="horizontal" />
         </>
-      ) : null}
+      ) : (
+        <EmptyState
+          title="Awaiting Backend Connection"
+          message={isDemo
+            ? "Ward risk data is loading..."
+            : "Real mode is active. Ward risk data will display live values once the backend is connected. Switch to Demo mode to view the demonstration scenario."}
+        />
+      )}
     </div>
   );
 };

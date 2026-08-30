@@ -1,3 +1,4 @@
+import { useDataMode } from '../context/DataModeContext';
 import { DEMO_DASHBOARD_DATA } from '../data/demoDashboardData';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import CitywideRiskSummary from '../components/dashboard/CitywideRiskSummary';
@@ -8,7 +9,7 @@ import WardRiskSummary from '../components/dashboard/WardRiskSummary';
 import ForecastSummary from '../components/dashboard/ForecastSummary';
 import ActiveAlerts from '../components/dashboard/ActiveAlerts';
 import RecommendedActions from '../components/dashboard/RecommendedActions';
-import { RiskLegend } from '../components/ui';
+import { RiskLegend, EmptyState } from '../components/ui';
 
 /**
  * DashboardPage - Citywide Heat Risk Dashboard
@@ -22,11 +23,30 @@ import { RiskLegend } from '../components/ui';
  * 3. Population vulnerability / health impact
  * 4. Actionable risk / alerts
  *
- * IMPORTANT: Currently uses demo data from demoDashboardData.ts
- * Backend integration will replace DEMO_DASHBOARD_DATA with API responses.
+ * Uses DataModeContext to determine data source:
+ * - Demo mode: uses DEMO_DASHBOARD_DATA
+ * - Real mode: shows "Awaiting Backend" placeholder (backend not connected)
  */
 const DashboardPage = () => {
-  const data = DEMO_DASHBOARD_DATA;
+  const { dataMode } = useDataMode();
+
+  const data = dataMode === 'demo' ? DEMO_DASHBOARD_DATA : null;
+
+  if (!data) {
+    return (
+      <div className="space-y-6 max-w-7xl">
+        <DashboardHeader
+          scenario="Real Mode — Backend Not Connected"
+          assessmentPeriod=""
+          isDemo={false}
+        />
+        <EmptyState
+          title="Awaiting Backend Connection"
+          message="Real mode is active. The dashboard will display live data once the backend is connected. Switch to Demo mode to view the demonstration scenario."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl">

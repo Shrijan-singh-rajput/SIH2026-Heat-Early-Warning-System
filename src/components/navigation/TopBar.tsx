@@ -1,6 +1,7 @@
 import { Menu, Bell, MapPin, User, Sun, Moon } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { useDataMode } from '../../context/DataModeContext';
 import StatusIndicator from '../ui/StatusIndicator';
 
 /**
@@ -9,6 +10,7 @@ import StatusIndicator from '../ui/StatusIndicator';
  * Displays:
  * - Mobile menu button
  * - Location (Bhubaneswar, Odisha)
+ * - Demo / Real data mode toggle
  * - Theme toggle button (Light/Dark mode)
  * - System status indicator
  * - Data freshness indicator
@@ -18,6 +20,7 @@ import StatusIndicator from '../ui/StatusIndicator';
 const TopBar = () => {
   const { toggleSidebar } = useAppStore();
   const { theme, effectiveTheme, setTheme } = useAccessibility();
+  const { dataMode, setDataMode } = useDataMode();
 
   const handleThemeToggle = () => {
     // Cycle through: light -> dark -> system
@@ -69,20 +72,57 @@ const TopBar = () => {
           </div>
         </div>
 
-        {/* Right section: Status + Notifications + User */}
-        <div className="flex items-center space-x-4">
+        {/* Right section: Data Mode Toggle + Status + Notifications + User */}
+        <div className="flex items-center space-x-3">
+          {/* Demo / Real segmented toggle */}
+          <div
+            className="flex items-center rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-0.5"
+            role="radiogroup"
+            aria-label="Data mode"
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={dataMode === 'demo'}
+              onClick={() => setDataMode('demo')}
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                dataMode === 'demo'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+              }`}
+              title="Simulated demonstration data"
+            >
+              Demo
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={dataMode === 'real'}
+              onClick={() => setDataMode('real')}
+              className={`px-2.5 py-1 text-xs font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                dataMode === 'real'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+              }`}
+              title="Real backend data (awaiting integration)"
+            >
+              Real
+            </button>
+          </div>
+
           {/* System Status - Placeholder until backend connection established */}
           <div className="hidden md:flex items-center space-x-3">
             <StatusIndicator
               status="offline"
-              label="Awaiting Backend"
+              label={dataMode === 'demo' ? 'Demo Mode' : 'Awaiting Backend'}
               showDot={true}
             />
           </div>
 
           {/* Data Freshness - Placeholder */}
           <div className="hidden lg:block text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-medium">Data:</span> Not connected
+            <span className="font-medium">Data:</span>{' '}
+            {dataMode === 'demo' ? 'Simulated' : 'Not connected'}
           </div>
 
           {/* Theme toggle */}

@@ -1,7 +1,8 @@
 ﻿import { useState } from 'react';
-import { Accessibility, MessageSquare, Mail, Building, Palette, Eye, Monitor, Move, Zap, Info, Check, Shield } from 'lucide-react';
+import { Accessibility, MessageSquare, Mail, Building, Palette, Eye, Monitor, Move, Zap, Info, Check, Shield, Database } from 'lucide-react';
 import { Card, SectionHeader, Button } from '../components/ui';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useDataMode } from '../context/DataModeContext';
 import type { ColorVisionMode, Theme } from '../config/accessibility';
 import type { RiskLevel } from '../types';
 import { getRiskConfig } from '../config/riskConfig';
@@ -140,6 +141,7 @@ function Toggle({ label, description, checked, onChange, icon }: ToggleProps) {
 const SettingsPage = () => {
   const { theme, setTheme, colorVision, setColorVision, reducedMotion, setReducedMotion } =
     useAccessibility();
+  const { dataMode, setDataMode } = useDataMode();
 
   /** ---- Persisted settings state (lazy-init from localStorage, matching AccessibilityContext pattern) ---- */
   const _stored = loadSettingsPreferences();
@@ -219,6 +221,12 @@ const SettingsPage = () => {
     { value: 'extreme', label: 'Extreme only' },
   ];
 
+  /** ---- Data mode options ---- */
+  const dataModeOptions: RadioOption<string>[] = [
+    { value: 'demo', label: 'Demo Mode', description: 'Simulated demonstration data for prototype showcase. Uses varied, coherent sample alerts, forecasts, and risk values.' },
+    { value: 'real', label: 'Real Mode', description: 'Uses actual backend data once integration is available. Currently shows "Awaiting Backend" for unavailable values.' },
+  ];
+
   /** ---- Heat action plan options ---- */
   const heatActionOptions = [
     { id: 'cooling-centre', label: 'Cooling Centre Activation', description: 'Activate or deactivate designated cooling centres.' },
@@ -247,21 +255,15 @@ const SettingsPage = () => {
     api: 'Not connected',
   };
 
-  /** ---- Demo data explanation ---- */
-  const demoDataInfo = (
-    <p className="text-sm text-gray-600 dark:text-gray-300">
-      The frontend currently uses demonstration data. Live weather, health, mortality, ward
-      telemetry, and alert data will be supplied by the backend after integration.
-    </p>
-  );
-
   /** ---- Reset preferences handler ---- */
   const handleResetPreferences = () => {
-    if (window.confirm('Reset all frontend preferences to defaults? This will reset theme, colour vision, reduced motion, and dashboard preferences. Application data and backend settings will not be affected.')) {
+    if (window.confirm('Reset all frontend preferences to defaults? This will reset theme, colour vision, reduced motion, data mode, and dashboard preferences. Application data and backend settings will not be affected.')) {
       // Reset accessibility to defaults via the context
       setTheme('system');
       setColorVision('default');
       setReducedMotion(false);
+      // Reset data mode to demo via the context
+      setDataMode('demo');
       // Reset settings preferences to defaults (save + set state)
       setRiskDisplayFormat('badge-icon');
       setDashboardLanding('dashboard');
@@ -349,6 +351,42 @@ const SettingsPage = () => {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Reduced Motion also respects your operating system{' '}
             <code className="font-mono">prefers-reduced-motion</code> setting. Functional feedback is preserved.
+          </p>
+        </div>
+      </Card>
+
+      {/* === SECTION 2B: DATA MODE === */}
+      <SectionHeader
+        title="Data Mode"
+        subtitle="Switch between simulated demonstration data and real backend data."
+      />
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Database className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Data Source</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Select which data source the application displays. This setting is shared with the
+          Demo / Real toggle in the top navigation bar.
+        </p>
+        <RadioGroup
+          name="dataMode"
+          legend="Select data source mode"
+          options={dataModeOptions}
+          value={dataMode}
+          onChange={(value) => setDataMode(value as 'demo' | 'real')}
+        />
+        <div className="mt-4 p-3 rounded-md bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            <strong>Demo Mode</strong> is temporary and intended for prototype/showcase purposes.
+            It uses simulated values to demonstrate alerts, warnings, notifications, risk levels,
+            and recommended actions when backend/real-world data is unavailable or when real
+            conditions are not sufficiently alarming.
+          </p>
+          <p className="mt-2 text-sm text-blue-800 dark:text-blue-300">
+            <strong>Real Mode</strong> is intended to use actual backend data once backend
+            integration is available. Currently, unavailable values display "-" or "Awaiting Backend".
           </p>
         </div>
       </Card>
@@ -631,9 +669,19 @@ const SettingsPage = () => {
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Current Data Mode</h2>
         </div>
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-          {"Demonstration Scenario"}
+          {dataMode === 'demo' ? 'Demonstration Scenario (Demo Mode)' : 'Real Mode — Awaiting Backend Integration'}
         </p>
-        {demoDataInfo}
+        {dataMode === 'demo' ? (
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            The frontend currently uses demonstration data. Live weather, health, mortality, ward
+            telemetry, and alert data will be supplied by the backend after integration.
+          </p>
+        ) : (
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Real mode is active. The application is configured to use actual backend data.
+            Currently, the backend is not connected — unavailable values display "-" or "Awaiting Backend".
+          </p>
+        )}
       </Card>
 
       <Card>

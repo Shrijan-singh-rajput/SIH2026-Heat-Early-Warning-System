@@ -50,9 +50,9 @@ const ForecastSummary = ({ days }: ForecastSummaryProps) => {
               <p className={`${TYPOGRAPHY.body} mt-3 text-gray-700 dark:text-gray-300`}>
                 {peakRisk?.description}
               </p>
-              <p className="mt-1 text-sm">
+              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                 Urgency:{' '}
-                <span className="font-semibold capitalize">{peakRisk?.urgency}</span>
+                <span className="font-semibold capitalize text-gray-900 dark:text-gray-100">{peakRisk?.urgency}</span>
               </p>
             </>
           ) : (

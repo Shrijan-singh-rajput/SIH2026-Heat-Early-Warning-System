@@ -46,7 +46,7 @@ const MetricCard = ({
     <Card className={`${colorClasses} ${className}`} padding="md">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className={TYPOGRAPHY.metricLabel}>{label}</div>
+          <div className={`${TYPOGRAPHY.metricLabel} break-words`}>{label}</div>
           <div className="mt-2 flex items-baseline space-x-2">
             <span className={TYPOGRAPHY.metricValue}>{value}</span>
             {unit && <span className={TYPOGRAPHY.metricUnit}>{unit}</span>}

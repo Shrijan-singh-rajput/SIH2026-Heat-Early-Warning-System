@@ -18,6 +18,7 @@ export const SETTINGS_STORAGE_KEYS = {
   MAP_VIEW: 'heat-ews-map-view',
   DATA_REFRESH: 'heat-ews-data-refresh',
   ALERT_SEVERITY: 'heat-ews-alert-severity',
+  DATA_MODE: 'heat-ews-data-mode',
 } as const;
 
 // --- Preference types ---
@@ -39,6 +40,8 @@ export type DataRefresh = 'auto' | '5m' | '15m' | 'manual';
 
 export type AlertSeverity = 'high' | 'veryHigh' | 'extreme';
 
+export type DataMode = 'demo' | 'real';
+
 // --- Default preferences ---
 
 export const DEFAULT_SETTINGS_PREFS = {
@@ -47,6 +50,7 @@ export const DEFAULT_SETTINGS_PREFS = {
   mapView: 'citywide',
   dataRefresh: 'manual',
   alertSeverity: 'high',
+  dataMode: 'demo',
 } as const;
 
 // --- Validation functions ---
@@ -79,6 +83,10 @@ export function isValidAlertSeverity(value: unknown): value is AlertSeverity {
   return value === 'high' || value === 'veryHigh' || value === 'extreme';
 }
 
+export function isValidDataMode(value: unknown): value is DataMode {
+  return value === 'demo' || value === 'real';
+}
+
 // --- Load preferences from localStorage with validation ---
 
 export function loadSettingsPreferences(): Partial<{
@@ -87,6 +95,7 @@ export function loadSettingsPreferences(): Partial<{
   mapView: MapView;
   dataRefresh: DataRefresh;
   alertSeverity: AlertSeverity;
+  dataMode: DataMode;
 }> {
   try {
     const riskDisplayFormat = localStorage.getItem(SETTINGS_STORAGE_KEYS.RISK_DISPLAY_FORMAT);
@@ -94,6 +103,7 @@ export function loadSettingsPreferences(): Partial<{
     const mapView = localStorage.getItem(SETTINGS_STORAGE_KEYS.MAP_VIEW);
     const dataRefresh = localStorage.getItem(SETTINGS_STORAGE_KEYS.DATA_REFRESH);
     const alertSeverity = localStorage.getItem(SETTINGS_STORAGE_KEYS.ALERT_SEVERITY);
+    const dataMode = localStorage.getItem(SETTINGS_STORAGE_KEYS.DATA_MODE);
 
     const prefs: Partial<{
       riskDisplayFormat: RiskDisplayFormat;
@@ -101,6 +111,7 @@ export function loadSettingsPreferences(): Partial<{
       mapView: MapView;
       dataRefresh: DataRefresh;
       alertSeverity: AlertSeverity;
+      dataMode: DataMode;
     }> = {};
 
     if (isValidRiskDisplayFormat(riskDisplayFormat)) {
@@ -117,6 +128,9 @@ export function loadSettingsPreferences(): Partial<{
     }
     if (isValidAlertSeverity(alertSeverity)) {
       prefs.alertSeverity = alertSeverity;
+    }
+    if (isValidDataMode(dataMode)) {
+      prefs.dataMode = dataMode;
     }
 
     return prefs;

@@ -71,7 +71,7 @@ const RiskBadge = ({
     // Text + Icon emphasis: text label with icon, no coloured badge background
     return (
       <span
-        className={`inline-flex items-center gap-1.5 font-medium ${TYPOGRAPHY.badge} ${presentation.text} ${darkPresentation.text} ${sizeClasses} ${className}`}
+        className={`inline-flex items-center gap-1.5 font-medium whitespace-nowrap ${TYPOGRAPHY.badge} ${presentation.text} ${darkPresentation.text} ${sizeClasses} ${className}`}
         role="status"
         aria-label={`Risk level: ${config.label}`}
       >
@@ -86,7 +86,7 @@ const RiskBadge = ({
   // Default: Badge + Icon + Text — full coloured badge
   return (
     <span
-      className={`inline-flex items-center border ${RADIUS.md} ${TYPOGRAPHY.badge} ${presentation.bg} ${presentation.text} ${presentation.border} ${darkPresentation.bg} ${darkPresentation.text} ${darkPresentation.border} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center border ${RADIUS.md} ${TYPOGRAPHY.badge} ${presentation.bg} ${presentation.text} ${presentation.border} ${darkPresentation.bg} ${darkPresentation.text} ${darkPresentation.border} ${sizeClasses} whitespace-nowrap ${className}`}
       role="status"
       aria-label={`Risk level: ${config.label}`}
     >

@@ -1,5 +1,5 @@
 ﻿import { useForecast } from '../hooks/useForecast';
-import { LoadingState, RiskLegend } from '../components/ui';
+import { LoadingState, EmptyState, RiskLegend } from '../components/ui';
 import ForecastHeader from '../components/forecast/ForecastHeader';
 import ForecastSummary from '../components/forecast/ForecastSummary';
 import FiveDayForecastCards from '../components/forecast/FiveDayForecastCards';
@@ -17,11 +17,12 @@ import ForecastRecommendations from '../components/forecast/ForecastRecommendati
  * WBGT, Heat Index), environmental drivers, population health impact, risk
  * trajectory and response recommendations.
  *
- * IMPORTANT: All values are DEMONSTRATION DATA ONLY (demoForecastData.ts).
- * The backend (GET /api/v1/forecast/multi-day) does not exist yet.
+ * Uses DataModeContext via useForecast hook:
+ * - Demo mode: simulated forecast data
+ * - Real mode: "Awaiting Backend" placeholder
  */
 const ForecastPage = () => {
-  const { data, isLoading } = useForecast();
+  const { data, isLoading, isDemo } = useForecast();
 
   return (
     <div className="space-y-6 max-w-7xl">
@@ -40,7 +41,14 @@ const ForecastPage = () => {
           <ForecastRecommendations recommendations={data.recommendations} />
           <RiskLegend orientation="horizontal" showDescriptions />
         </>
-      ) : null}
+      ) : (
+        <EmptyState
+          title="Awaiting Backend Connection"
+          message={isDemo
+            ? "Forecast data is loading..."
+            : "Real mode is active. The 5-day forecast will display live data once the backend is connected. Switch to Demo mode to view the demonstration scenario."}
+        />
+      )}
     </div>
   );
 };

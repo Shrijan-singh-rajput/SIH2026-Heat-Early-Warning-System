@@ -18,10 +18,14 @@
  * 13. Quick Safety Summary
  * 14. Existing Five-Level Risk Legend
  *
- * Uses demonstration data only. Backend not connected.
+ * Uses DataModeContext via useCitizenSafety hook:
+ * - Demo mode: simulated citizen safety data
+ * - Real mode: "Awaiting Backend" placeholder
  */
 
 import { useEffect } from 'react';
+import { useDataMode } from '../context/DataModeContext';
+import { useCitizenSafety } from '../hooks/useCitizenSafety';
 import { DEMO_CITIZEN_SAFETY_DATA, METADATA } from '../data/demoCitizenSafetyData';
 import CitizenSafetyHeader from '../components/citizen-safety/CitizenSafetyHeader';
 import DemoDataNotice from '../components/ui/DemoDataNotice';
@@ -37,15 +41,48 @@ import HomeCoolingGuidance from '../components/citizen-safety/HomeCoolingGuidanc
 import CitizenRiskChecklist from '../components/citizen-safety/CitizenRiskChecklist';
 import QuickSafetySummary from '../components/citizen-safety/QuickSafetySummary';
 import RiskLegend from '../components/ui/RiskLegend';
+import { EmptyState } from '../components/ui';
 
 const CitizenSafetyPage = () => {
-  // Extract current risk from demo data
-  const currentRiskLevel = DEMO_CITIZEN_SAFETY_DATA.currentRisk.level;
+  const { dataMode } = useDataMode();
+  const { isLoading } = useCitizenSafety();
+
+  // Use demo data contextually - in demo mode use the imported demo data,
+  // in real mode data will be null
+  const isDemo = dataMode === 'demo';
+  const currentRiskLevel = isDemo ? DEMO_CITIZEN_SAFETY_DATA.currentRisk.level : null;
 
   useEffect(() => {
     // Document title
     document.title = 'Citizen Heat Safety - Bhubaneswar Heat Early Warning System';
   }, []);
+
+  if (isLoading) {
+    return (
+      <main className="max-w-7xl mx-auto p-4">
+        <div className="space-y-8">
+          <CitizenSafetyHeader currentRiskLevel="moderate" />
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">Loading citizen safety data...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!isDemo || !currentRiskLevel) {
+    return (
+      <main className="max-w-7xl mx-auto p-4">
+        <div className="space-y-8">
+          <CitizenSafetyHeader currentRiskLevel="moderate" />
+          <EmptyState
+            title="Awaiting Backend Connection"
+            message="Real mode is active. Citizen heat safety data will display live values once the backend is connected. Switch to Demo mode to view the demonstration scenario."
+          />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-7xl mx-auto p-4">

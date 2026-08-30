@@ -1,6 +1,7 @@
 ﻿import { useMemo, useState } from 'react';
 import { TYPOGRAPHY } from '../config/theme';
 import { useAccessibility } from '../context/AccessibilityContext';
+import { useDataMode } from '../context/DataModeContext';
 import { useRiskZones } from '../hooks/useRiskZones';
 import type { MapLayerId, RiskZoneFeature } from '../types/mapTypes';
 import { DemoDataNotice, LoadingState, RiskLegend } from '../components/ui';
@@ -22,10 +23,12 @@ const MAP_VIEW_TO_LAYER: Record<string, MapLayerId> = {
  * Answers: "Which areas of Bhubaneswar are currently at greater human
  * thermal-stress risk?"
  *
- * IMPORTANT: All map values are DEMONSTRATION DATA ONLY. The backend
- * (PostGIS → GET /api/risk-zones) does not exist yet.
+ * Uses DataModeContext via useRiskZones hook:
+ * - Demo mode: simulated risk zone data
+ * - Real mode: empty map with "Awaiting Backend" notice
  */
 const MapPage = () => {
+  const { dataMode } = useDataMode();
   const { data, isLoading, isDemo, scenario } = useRiskZones();
   const { colorVision, effectiveTheme } = useAccessibility();
 
@@ -58,6 +61,13 @@ const MapPage = () => {
             scenario={scenario}
             assessmentPeriod={data?.metadata.assessmentPeriod}
           />
+        )}
+        {!isDemo && dataMode === 'real' && (
+          <div className="mt-3 p-3 rounded-md bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700">
+            <p className="text-sm text-yellow-800 dark:text-yellow-300">
+              <strong>Real Mode:</strong> Awaiting backend connection. Map zones will display live risk data once PostGIS integration is available.
+            </p>
+          </div>
         )}
       </div>
 

@@ -33,19 +33,19 @@ const FiveDayForecastCards = ({ days }: FiveDayForecastCardsProps) => {
           return (
             <Card key={day.date} padding="sm" className="flex flex-col">
               {/* Day header */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {day.dayLabel}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                     {formatDayDate(day.weekday, day.date)}
                   </p>
                 </div>
                 <TrendChip trend={trend} previousIndex={index} />
               </div>
 
-              <div className="mt-3">
+              <div className="mt-3 overflow-x-auto scrollbar-hidden">
                 <RiskBadge level={day.risk} size="md" />
               </div>
 

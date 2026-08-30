@@ -42,7 +42,7 @@ const HealthForecast = ({ days }: HealthForecastProps) => {
               <HeartPulse className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3 overflow-x-auto scrollbar-hidden">
               <p className="text-[11px] font-medium uppercase tracking-wide text-purple-700 dark:text-purple-300">
                 Heat-Health Concern
               </p>
@@ -62,24 +62,16 @@ const HealthForecast = ({ days }: HealthForecastProps) => {
                 label="Population Exposed"
                 value={`~${(day.health.populationExposed / 1000).toFixed(0)}k`}
               />
-              <div className="flex items-center justify-between">
-                <dt className="flex items-center gap-1.5 text-xs font-medium text-purple-700 dark:text-purple-300">
-                  <HeartPulse className="h-3.5 w-3.5" aria-hidden="true" />
-                  Mortality Risk
-                </dt>
-                <dd>
-                  <RiskBadge level={day.health.mortalityRisk} size="sm" />
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="flex items-center gap-1.5 text-xs font-medium text-purple-700 dark:text-purple-300">
-                  <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Hospitalization Risk
-                </dt>
-                <dd>
-                  <RiskBadge level={day.health.hospitalizationRisk} size="sm" />
-                </dd>
-              </div>
+              <HealthStatRisk
+                icon={<HeartPulse className="h-3.5 w-3.5" aria-hidden="true" />}
+                label="Mortality Risk"
+                badge={<RiskBadge level={day.health.mortalityRisk} size="sm" />}
+              />
+              <HealthStatRisk
+                icon={<Building2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                label="Hospitalization Risk"
+                badge={<RiskBadge level={day.health.hospitalizationRisk} size="sm" />}
+              />
             </dl>
 
             <p className="mt-3 text-xs italic leading-relaxed text-purple-700 dark:text-purple-300">
@@ -104,14 +96,34 @@ const HealthStat = ({
 }: {
   icon: ReactNode;
   label: string;
-  value: string;
+  value?: string;
 }) => (
-  <div className="flex items-center justify-between">
+  <div className="flex items-start justify-between gap-2">
+    <dt className="flex items-center gap-1.5 text-xs font-medium text-purple-700 dark:text-purple-300">
+      {icon}
+      <span className="leading-tight">{label}</span>
+    </dt>
+    <dd className="text-sm font-semibold text-purple-900 dark:text-purple-100 text-right leading-tight">{value}</dd>
+  </div>
+);
+
+const HealthStatRisk = ({
+  icon,
+  label,
+  badge,
+}: {
+  icon: ReactNode;
+  label: string;
+  badge: ReactNode;
+}) => (
+  <div className="space-y-1">
     <dt className="flex items-center gap-1.5 text-xs font-medium text-purple-700 dark:text-purple-300">
       {icon}
       {label}
     </dt>
-    <dd className="text-sm font-semibold text-purple-900 dark:text-purple-100">{value}</dd>
+    <dd className="overflow-x-auto scrollbar-hidden">
+      {badge}
+    </dd>
   </div>
 );
 

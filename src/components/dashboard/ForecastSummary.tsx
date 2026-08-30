@@ -41,10 +41,12 @@ const ForecastSummary = ({ forecast }: ForecastSummaryProps) => {
             key={day.date}
             className="border border-gray-200 rounded-md p-3 hover:border-gray-300 transition-colors dark:border-gray-700 dark:hover:border-gray-600"
           >
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 dark:text-gray-400">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 dark:text-gray-400 truncate">
               {day.dayLabel}
             </p>
-            <RiskBadge level={day.risk} size="sm" className="mb-2" />
+            <div className="mb-2 overflow-x-auto scrollbar-hidden">
+              <RiskBadge level={day.risk} size="sm" />
+            </div>
             <div className="space-y-1">
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 <span className="font-medium">UTCI:</span> {day.utci.toFixed(1)}°C

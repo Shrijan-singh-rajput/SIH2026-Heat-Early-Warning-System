@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { useHealthAnalytics } from '../hooks/useHealthAnalytics';
-import { LoadingState, RiskLegend } from '../components/ui';
+import { LoadingState, EmptyState, RiskLegend } from '../components/ui';
 import HealthAnalyticsHeader from '../components/health/HealthAnalyticsHeader';
 import CitywideHealthSummary from '../components/health/CitywideHealthSummary';
 import PopulationVulnerabilityOverview from '../components/health/PopulationVulnerabilityOverview';
@@ -20,13 +20,12 @@ import HealthPriorities from '../components/health/HealthPriorities';
  * and communicates the operational chain:
  *   HEAT EXPOSURE → THERMAL STRESS → VULNERABILITY → HEALTH IMPACT
  *
- * This is a municipal/public-health OPERATIONAL analytics view — NOT a
- * generic healthcare dashboard and NOT a medical application. It is presented
- * as clearly labelled demonstration data until the backend analytics engine
- * (`GET /api/v1/health-analytics`) is connected.
+ * Uses DataModeContext via useHealthAnalytics hook:
+ * - Demo mode: simulated health analytics data
+ * - Real mode: "Awaiting Backend" placeholder
  */
 const AnalyticsPage = () => {
-  const { data, isLoading } = useHealthAnalytics();
+  const { data, isLoading, isDemo } = useHealthAnalytics();
   const [selectedZoneCode, setSelectedZoneCode] = useState<string | null>(null);
 
   const wardHealth = useMemo(() => data?.wardHealth ?? [], [data]);
@@ -62,7 +61,14 @@ const AnalyticsPage = () => {
 
           <RiskLegend orientation="horizontal" showDescriptions />
         </>
-      ) : null}
+      ) : (
+        <EmptyState
+          title="Awaiting Backend Connection"
+          message={isDemo
+            ? "Health analytics data is loading..."
+            : "Real mode is active. Health analytics will display live data once the backend is connected. Switch to Demo mode to view the demonstration scenario."}
+        />
+      )}
     </div>
   );
 };

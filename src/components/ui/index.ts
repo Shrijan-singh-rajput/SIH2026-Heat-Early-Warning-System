@@ -19,3 +19,4 @@ export { default as RiskBadge } from './RiskBadge';
 export { default as RiskLegend } from './RiskLegend';
 export { default as SectionHeader } from './SectionHeader';
 export { default as StatusIndicator } from './StatusIndicator';
+export { default as Tooltip } from './Tooltip';

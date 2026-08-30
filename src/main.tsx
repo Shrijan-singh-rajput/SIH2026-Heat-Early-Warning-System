@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import { router } from './config/router'
 import { AccessibilityProvider } from './context/AccessibilityContext'
+import { DataModeProvider } from './context/DataModeContext'
 
 // Create a QueryClient instance for React Query
 const queryClient = new QueryClient({
@@ -20,9 +21,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AccessibilityProvider>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <DataModeProvider>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </DataModeProvider>
     </AccessibilityProvider>
   </StrictMode>,
 )

@@ -11,9 +11,8 @@
  * The backend (GET /api/v1/alerts) does not exist yet.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { useAlerts } from '../hooks/useAlerts';
-import type { RiskLevel } from '../types';
 import {
   Card,
   MetricCard,
@@ -24,12 +23,10 @@ import {
   Button,
   DemoDataNotice,
   RiskLegend,
+  Tooltip,
 } from '../components/ui';
-import { getRiskConfig, getRiskPresentation } from '../config/riskConfig';
-import { useAccessibility } from '../context/AccessibilityContext';
-import type { ColorVisionMode } from '../config/accessibility';
+import { getRiskConfig } from '../config/riskConfig';
 import { Bell, AlertOctagon, Zap, Info, AlertTriangle, Building2 } from 'lucide-react';
-import { useState } from 'react';
 import { loadSettingsPreferences } from '../config/settingsPreferences';
 
 /* Types for filter state */
@@ -54,32 +51,6 @@ const SEVERITY_ORDER: Record<string, number> = {
   extreme: 5,
 };
 
-/* Demo filter options - derived from the five-level risk model */
-const RISK_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Levels' },
-  { value: 'low', label: 'LOW' },
-  { value: 'moderate', label: 'MODERATE' },
-  { value: 'high', label: 'HIGH' },
-  { value: 'very_high', label: 'VERY HIGH' },
-  { value: 'extreme', label: 'EXTREME' },
-];
-
-const STATUS_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'acknowledged', label: 'Acknowledged' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'scheduled', label: 'Scheduled' },
-];
-
-const PRIORITY_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Priorities' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'critical', label: 'Critical' },
-];
-
 /**
  * AlertsPage — Heat Alerts & Action Center page
  *
@@ -97,6 +68,10 @@ const AlertsPage = () => {
     search: '',
     ward: '',
   });
+
+  const updateFilter = <K extends keyof AlertFilterState>(key: K, value: AlertFilterState[K]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
 
   /* --- Notification severity threshold --- */
   const storedSettings = loadSettingsPreferences();
@@ -153,23 +128,35 @@ const AlertsPage = () => {
     });
   }, [data, filters, severityThreshold]);
 
-  /* --- Alert selection state --- */
-  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+/* --- Alert selection state --- */
+const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
-  /* --- Accessibility --- */
-  const { colorVision } = useAccessibility();
+/* --- Scroll target state (set by View buttons, consumed by useEffect) --- */
+const [scrollToDetailTarget, setScrollToDetailTarget] = useState<string | null>(null);
+const [scrollToActionTarget, setScrollToActionTarget] = useState<string | null>(null);
 
-  /* --- Render risk badge presentation classes --- */
-  const getPresentation = (level: RiskLevel) => {
-    const config = getRiskConfig(level);
-    return getRiskPresentation(config, colorVision as ColorVisionMode);
-  };
+/* --- Refs for scroll targets --- */
+const alertDetailRef = useRef<HTMLDivElement>(null);
+const recommendedActionRef = useRef<HTMLDivElement>(null);
+
+/* --- Scroll to Alert Detail after render --- */
+useEffect(() => {
+  if (scrollToDetailTarget && alertDetailRef.current) {
+    alertDetailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setScrollToDetailTarget(null);
+  }
+}, [scrollToDetailTarget, selectedAlertId]);
+
+/* --- Scroll to Recommended Heat Action after render --- */
+useEffect(() => {
+  if (scrollToActionTarget && recommendedActionRef.current) {
+    recommendedActionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setScrollToActionTarget(null);
+  }
+}, [scrollToActionTarget, selectedAlertId]);
 
   /* --- Summary metrics --- */
-  const activeAlertCount = useMemo(
-    () => filteredAlerts.filter((a) => a.status === 'active').length,
-    [filteredAlerts]
-  );
+  const activeAlertCount = useMemo(() => filteredAlerts.length, [filteredAlerts]);
   const extremeCount = useMemo(
     () => filteredAlerts.filter((a) => a.severity === 'extreme').length,
     [filteredAlerts]
@@ -194,6 +181,12 @@ const AlertsPage = () => {
     [filteredAlerts]
   );
 
+  /* --- Selected alert object --- */
+  const selectedAlert = useMemo(
+    () => filteredAlerts.find((a) => a.id === selectedAlertId) ?? null,
+    [filteredAlerts, selectedAlertId]
+  );
+
   /* --- If no data is loading, show skeleton or empty state --- */
   if (isLoading) {
     return (
@@ -207,8 +200,8 @@ const AlertsPage = () => {
     return (
       <div className="space-y-6 max-w-7xl">
         <EmptyState
-          title="No alert data available"
-          message="Unable to load alert data. Please try again later."
+          title="Awaiting Backend Connection"
+          message="Real mode is active. Alert data will display once the backend is connected. Switch to Demo mode to view the demonstration scenario."
         />
       </div>
     );
@@ -236,7 +229,7 @@ const AlertsPage = () => {
       {/* 3. Operational Summary section */}
       <SectionHeader
         title="Operational Summary"
-        subtitle="Active alerts: {activeAlertCount} · Very High: {veryHighCount} · Extreme: {extremeCount} · High: {highCount}"
+        subtitle={`Active alerts: ${activeAlertCount} · Very High: ${veryHighCount} · Extreme: ${extremeCount} · High: ${highCount}`}
       />
       <Card className="border-t border-gray-200 dark:border-gray-700 dark:bg-gray-800">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mt-4">
@@ -276,18 +269,58 @@ const AlertsPage = () => {
             colorScheme="default"
           />
           <MetricCard
-            label="Requires Acknowledgement"
+            label="Requires Ack."
             value={alertsAcknowledged}
             subtitle="pending acknowledgement"
-            icon={<Info className="text-blue-400" />}
+            icon={
+              <Tooltip content="Alerts or actions that are currently pending acknowledgement by the responsible operator or authority.">
+                <Info className="text-blue-400 cursor-help" aria-label="Information about Requires Acknowledgement" />
+              </Tooltip>
+            }
             colorScheme="default"
           />
         </div>
       </Card>
 
       {/* 4. Active Alerts section */}
-      <SectionHeader title="Active Alerts" subtitle="•" />
+      <SectionHeader title="Active Alerts" />
       <Card className="border-t border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+        {/* Filter controls */}
+        <div className="flex flex-wrap gap-3 mt-4 mb-4">
+          <input
+            type="text"
+            placeholder="Search alerts…"
+            value={filters.search}
+            onChange={(e) => updateFilter('search', e.target.value)}
+            className="flex-1 min-w-[180px] px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Search alerts by title, ID, area, or description"
+          />
+          <select
+            value={filters.risk}
+            onChange={(e) => updateFilter('risk', e.target.value as AlertFilterRisk)}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Filter by risk level"
+          >
+            <option value="all">All Risk Levels</option>
+            <option value="low">Low</option>
+            <option value="moderate">Moderate</option>
+            <option value="high">High</option>
+            <option value="very_high">Very High</option>
+            <option value="extreme">Extreme</option>
+          </select>
+          <select
+            value={filters.status}
+            onChange={(e) => updateFilter('status', e.target.value as AlertFilterStatus)}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Filter by status"
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="resolved">Resolved</option>
+            <option value="scheduled">Scheduled</option>
+          </select>
+        </div>
         <div className="mt-4 overflow-x-auto">
           {filteredAlerts.length === 0 ? (
             <EmptyState
@@ -297,48 +330,32 @@ const AlertsPage = () => {
           ) : (
             <table className="w-full min-w-[860px] text-left" aria-label="Active alerts table">
               <thead>
-                <tr className="${'text-sm font-medium text-gray-900 dark:text-gray-100'} as const">
+                <tr className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   <th scope="col" className="px-4 py-3">
-                    <div>Alert</div>
+                    Alert
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    <div>Risk</div>
+                    Risk
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    <div>Location</div>
+                    Location
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    <div>Status</div>
+                    Status
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    <div>Priority</div>
+                    Priority
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    <div>Audience</div>
+                    Audience
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    <div>Action</div>
+                    Action
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAlerts.map((alert) => {
-                  const riskPresentation = getPresentation(alert.severity);
-                  const riskBadgeClasses = [
-                    'inline-flex',
-                    'items-center',
-                    'border',
-                    'rounded-md',
-                    'text-xs',
-                    'font-medium',
-                    riskPresentation.bg,
-                    riskPresentation.text,
-                    riskPresentation.border,
-                    'dark:bg-[var(--dark)]',
-                    'dark:text-[var(--dark-text)]',
-                    'dark:border-[var(--dark-border)]',
-                  ].join(' ');
-
                   return (
                     <tr
                       key={alert.id}
@@ -379,31 +396,63 @@ const AlertsPage = () => {
                           {alert.affectedWards.join(', ')}
                         </p>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span
-                          className={riskBadgeClasses}
-                          role="status"
+                          className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                            alert.status === 'active'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                              : alert.status === 'acknowledged'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
+                              : alert.status === 'resolved'
+                              ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
+                          }`}
+                          aria-label={`Status: ${alert.status}`}
                         >
-                          {alert.severity.toUpperCase()}
+                          {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                        {alert.intendedAudience
-                          .map(
-                            (aud) =>
-                              aud
-                                .replace('-', ' ')
-                                .split(' ')
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(' ')
-                          )
-                          .join(', ')}
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 capitalize">
+                        {alert.priority}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                        <p className="truncate max-w-[140px]">
+                          {alert.intendedAudience
+                            .map(
+                              (aud) =>
+                                aud
+                                  .replace('-', ' ')
+                                  .split(' ')
+                                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                  .join(' ')
+                            )
+                            .join(', ')}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 p-0 h-auto"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAlertId(alert.id);
+                            setScrollToDetailTarget(alert.id);
+                          }}
+                          aria-label={`View details for ${alert.title}`}
+                        >
+                          View
+                        </Button>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAlertId(alert.id);
+                            setScrollToActionTarget(alert.id);
+                          }}
+                          aria-label={`View recommended action for ${alert.title}`}
                         >
                           View
                         </Button>
@@ -418,117 +467,159 @@ const AlertsPage = () => {
       </Card>
 
       {/* 7. Selected Alert Detail */}
-      {selectedAlertId && data?.alerts.length > 0 && selectedAlertId !== null && (
-        <Card
-          className="mt-6 p-6 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800"
-          aria-labelledby="selected-alert-title"
-        >
-          <h2
-            id="selected-alert-title"
-            className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4"
+      {selectedAlert && (
+        <div ref={alertDetailRef} className="scroll-mt-20">
+          <Card
+            className="p-6 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800"
+            aria-labelledby="selected-alert-title"
           >
-            Alert Detail: {selectedAlertId}
-          </h2>
+            <h2
+              id="selected-alert-title"
+              className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4"
+            >
+              Alert Detail: {selectedAlert.id}
+            </h2>
 
-          {/* Alert ID and basic info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Alert ID</p>
-              <p className="font-medium text-gray-900 dark:text-gray-100">{selectedAlertId}</p>
+            {/* Alert ID and basic info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Alert ID</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{selectedAlert.id}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Severity</p>
+                <RiskBadge
+                  level={selectedAlert.severity}
+                  size="sm"
+                  aria-label={`Risk level: ${getRiskConfig(selectedAlert.severity).label}`}
+                />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Severity</p>
-              <RiskBadge
-                level="high"
-                size="sm"
-                aria-label="Risk level: High Risk"
-              />
+
+            {/* Trigger Explanation */}
+            <div className="space-y-4 mb-6">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Environmental Conditions</p>
+              <dl className="mt-2 grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-xs text-gray-500 dark:text-gray-400">Temperature</dt>
+                  <dd className="text-sm text-gray-900 dark:text-gray-100">{selectedAlert.trigger.temperature}°C</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-gray-500 dark:text-gray-400">Humidity</dt>
+                  <dd className="text-sm text-gray-900 dark:text-gray-100">{selectedAlert.trigger.humidity}%</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-gray-500 dark:text-gray-400">Wind Speed</dt>
+                  <dd className="text-sm text-gray-900 dark:text-gray-100">{selectedAlert.trigger.windSpeed} m/s</dd>
+                </div>
+                {selectedAlert.trigger.heatIndex != null && (
+                  <div>
+                    <dt className="text-xs text-gray-500 dark:text-gray-400">Heat Index</dt>
+                    <dd className="text-sm text-gray-900 dark:text-gray-100">{selectedAlert.trigger.heatIndex}°C</dd>
+                  </div>
+                )}
+              </dl>
+
+              {(selectedAlert.trigger.utcI != null || selectedAlert.trigger.wbgt != null) && (
+                <>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">Thermal Stress</p>
+                  <dl className="mt-2 grid grid-cols-2 gap-4">
+                    {selectedAlert.trigger.utcI != null && (
+                      <div>
+                        <dt className="text-xs text-gray-500 dark:text-gray-400">UTCI</dt>
+                        <dd className="text-sm text-gray-900 dark:text-gray-100">{selectedAlert.trigger.utcI}°C</dd>
+                      </div>
+                    )}
+                    {selectedAlert.trigger.wbgt != null && (
+                      <div>
+                        <dt className="text-xs text-gray-500 dark:text-gray-400">WBGT</dt>
+                        <dd className="text-sm text-gray-900 dark:text-gray-100">{selectedAlert.trigger.wbgt}°C</dd>
+                      </div>
+                    )}
+                  </dl>
+                </>
+              )}
             </div>
-          </div>
 
-          {/* Trigger Explanation */}
-          <div className="space-y-4 mb-6">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Environmental Conditions</p>
-            <dl className="mt-2 grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">Temperature</dt>
-                <dd className="text-sm text-gray-900 dark:text-gray-100">42.5°C</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">Humidity</dt>
-                <dd className="text-sm text-gray-900 dark:text-gray-100">68%</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">Wind Speed</dt>
-                <dd className="text-sm text-gray-900 dark:text-gray-100">3.2 m/s</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">Heat Index</dt>
-                <dd className="text-sm text-gray-900 dark:text-gray-100">54.8°C</dd>
-              </div>
-            </dl>
+            {/* Alert description */}
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</p>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{selectedAlert.description}</p>
+            </div>
 
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">Thermal Stress</p>
-            <dl className="mt-2 grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">UTCI</dt>
-                <dd className="text-sm text-gray-900 dark:text-gray-100">45.2°C</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">WBGT</dt>
-                <dd className="text-sm text-gray-900 dark:text-gray-100">32.1°C</dd>
-              </div>
-            </dl>
-          </div>
-        </Card>
+            {/* Vulnerability */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Vulnerability</p>
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Score: {selectedAlert.vulnerability.score}/100 ·
+                {' '}{selectedAlert.vulnerability.vulnerablePopulation.toLocaleString()} people at risk
+                {selectedAlert.vulnerability.atRiskGroups.length > 0 && (
+                  <> — {selectedAlert.vulnerability.atRiskGroups.map(g => g.replace('-', ' ')).join(', ')}</>
+                )}
+              </p>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* 9. Recommended Heat Action */}
-      {selectedAlertId && data?.alerts.length > 0 && selectedAlertId !== null && (
-        <Card className="mt-6 p-6 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
-          <h3 className="text-font-medium text-gray-900 dark:text-gray-100 mb-4">
-            Recommended Heat Action
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Public Health</p>
-              <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-3">
-                Issue heat-safety advisory to the general public and vulnerable populations.
-                Increase outreach to older adults and children. Ensure hydration and
-                cooling access are available.
+      {selectedAlert && (
+        <div ref={recommendedActionRef} className="scroll-mt-20">
+          <Card className="p-6 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Recommended Heat Action
+            </h3>
+
+            {/* Alert-specific recommendation */}
+            <div className="mb-6 p-4 rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Alert-Specific Action</p>
+              <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+                {selectedAlert.recommendedAction}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Outdoor Work</p>
-              <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-2">
-                Adjust outdoor work hours to cooler parts of the day. Increase rest and
-                hydration guidance for construction and municipal workers.
-              </p>
+
+            {/* General guidance categories */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Public Health</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-3">
+                  Issue heat-safety advisory to the general public and vulnerable populations.
+                  Increase outreach to older adults and children. Ensure hydration and
+                  cooling access are available.
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Outdoor Work</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-2">
+                  Adjust outdoor work hours to cooler parts of the day. Increase rest and
+                  hydration guidance for construction and municipal workers.
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Municipal</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-2">
+                  Prepare cooling centres. Increase water availability in affected wards.
+                  Monitor high-risk wards for escalation.
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Healthcare</p>
+                <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-2">
+                  Prepare facilities for heat-related cases. Increase readiness during
+                  peak-risk periods. Coordinate with emergency response teams.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Municipal</p>
-              <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-2">
-                Prepare cooling centres. Increase water availability in affected wards.
-                Monitor high-risk wards for escalation.
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Healthcare</p>
-              <p className="text-base text-gray-900 dark:text-gray-100 line-clamp-2">
-                Prepare facilities for heat-related cases. Increase readiness during
-                peak-risk periods. Coordinate with emergency response teams.
-              </p>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-            These are demonstration recommendations until the backend Heat Action
-            Plan/rules engine is connected.
-          </p>
-        </Card>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+              These are demonstration recommendations until the backend Heat Action
+              Plan/rules engine is connected.
+            </p>
+          </Card>
+        </div>
       )}
 
       {/* 11. Notification Channels */}
-      <SectionHeader title="Notification Channels" subtitle="•" />
+      <SectionHeader title="Notification Channels" />
       <Card className="border-t border-gray-200 dark:border-gray-700 dark:bg-gray-800">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4">
           {['sms', 'whatsapp', 'dashboard', 'public-display', 'municipal-operations'].map(
@@ -549,22 +640,24 @@ const AlertsPage = () => {
               return (
                 <div
                   key={channel}
-                  className="flex items-center justify-between rounded-md border p-3 ${
+                  className={`flex items-center justify-between rounded-md border p-3 ${
                     status === 'ready'
                       ? 'bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-800'
                       : status === 'not-connected'
                       ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-800/50 dark:border-yellow-600'
                       : 'bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-600'
-                  }">
+                  }`}
+                >
                   <span className="text-sm text-gray-700 dark:text-gray-300">{channelLabels[channel]}</span>
                   <span
-                    className="text-xs font-medium ${
+                    className={`text-xs font-medium ${
                       status === 'ready'
                         ? 'text-green-600 dark:text-green-400'
                         : status === 'not-connected'
                         ? 'text-yellow-600 dark:text-yellow-400'
                         : 'text-gray-500 dark:text-gray-400'
-                    }">
+                    }`}
+                  >
                     {status === 'ready' ? 'Ready for integration' : status === 'not-connected' ? 'Backend required' : status}
                   </span>
                 </div>
@@ -579,7 +672,7 @@ const AlertsPage = () => {
       </Card>
 
       {/* 12. Alert Lifecycle / History */}
-      <SectionHeader title="Alert Lifecycle" subtitle="•" />
+      <SectionHeader title="Alert Lifecycle" />
       <Card className="border-t border-gray-200 dark:border-gray-700 dark:bg-gray-800">
         <div className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
