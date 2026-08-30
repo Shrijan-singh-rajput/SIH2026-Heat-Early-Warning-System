@@ -1,10 +1,18 @@
-﻿import { Check, Accessibility, Palette, Eye, Monitor, SunMedium, Moon, Move } from 'lucide-react';
-import { Card, SectionHeader, RiskLegend } from '../components/ui';
+﻿import { useState, useEffect } from 'react';
+import { Accessibility, MessageSquare, Mail, Building, Palette, Eye, Monitor, Move, Zap, Info, Check, Shield } from 'lucide-react';
+import { Card, SectionHeader, Button } from '../components/ui';
 import { useAccessibility } from '../context/AccessibilityContext';
 import type { ColorVisionMode, Theme } from '../config/accessibility';
+import type { RiskLevel } from '../types';
+import { getRiskConfig } from '../config/riskConfig';
+import {
+  loadSettingsPreferences,
+  saveSettingsPreference,
+  SETTINGS_STORAGE_KEYS,
+} from '../config/settingsPreferences';
 
 /**
- * Radio group with accessible semantics.
+ * Radio option definition
  */
 interface RadioOption<T extends string> {
   value: T;
@@ -12,6 +20,9 @@ interface RadioOption<T extends string> {
   description?: string;
 }
 
+/**
+ * Radio group with accessible semantics
+ */
 interface RadioGroupProps<T extends string> {
   name: string;
   legend: string;
@@ -64,7 +75,7 @@ function RadioGroup<T extends string>({ name, legend, options, value, onChange }
 }
 
 /**
- * Toggle switch with accessible semantics.
+ * Toggle switch with accessible semantics
  */
 interface ToggleProps {
   label: string;
@@ -111,21 +122,69 @@ function Toggle({ label, description, checked, onChange, icon }: ToggleProps) {
 }
 
 /**
- * SettingsPage - System configuration
+ * SettingsPage - Full system configuration and administration center
  *
- * Includes the Accessibility & Display preferences (theme, colour vision,
- * reduced motion) backed by the reusable AccessibilityProvider.
+ * Transformed from a simple accessibility preferences page into a professional
+ * municipal heat early-warning system settings center. Contains frontend preferences,
+ * dashboard configuration, risk display settings, notification preferences, heat
+ * action plan options, data mode information, and backend integration status.
+ *
+ * ALL ACCESSIBILITY PREFERENCES are handled by the existing AccessibilityContext
+ * and configuration. This page re-uses that single source of truth and does not
+ * create a duplicate system.
+ *
+ * Backend-dependent settings are clearly marked as "Backend integration required"
+ * or "Coming with backend integration" to avoid implying capabilities that do not
+ * yet exist.
  */
 const SettingsPage = () => {
   const { theme, setTheme, colorVision, setColorVision, reducedMotion, setReducedMotion } =
     useAccessibility();
 
+  /** ---- Persisted settings state ---- */
+  const [riskDisplayFormat, setRiskDisplayFormat] = useState<string>('badge-icon');
+  const [dashboardLanding, setDashboardLanding] = useState<string>('dashboard');
+  const [mapView, setMapView] = useState<string>('citywide');
+  const [dataRefresh, setDataRefresh] = useState<string>('manual');
+  const [notificationSeverity, setNotificationSeverity] = useState<string>('high');
+
+  /** Initialize settings preferences from persisted localStorage values */
+  useEffect(() => {
+    const stored = loadSettingsPreferences();
+    if (stored.riskDisplayFormat !== undefined) {
+      setRiskDisplayFormat(stored.riskDisplayFormat);
+    }
+    if (stored.dashboardLanding !== undefined) {
+      setDashboardLanding(stored.dashboardLanding);
+    }
+    if (stored.mapView !== undefined) {
+      setMapView(stored.mapView);
+    }
+    if (stored.dataRefresh !== undefined) {
+      setDataRefresh(stored.dataRefresh);
+    }
+    if (stored.alertSeverity !== undefined) {
+      setNotificationSeverity(stored.alertSeverity);
+    }
+  }, []);
+
+  /** Persist settings preferences to localStorage when they change */
+  useEffect(() => {
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.RISK_DISPLAY_FORMAT, riskDisplayFormat);
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.DASHBOARD_LANDING, dashboardLanding);
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.MAP_VIEW, mapView);
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.DATA_REFRESH, dataRefresh);
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.ALERT_SEVERITY, notificationSeverity);
+  }, [riskDisplayFormat, dashboardLanding, mapView, dataRefresh, notificationSeverity]);
+
+  /** ---- Theme options ---- */
   const themeOptions: RadioOption<Theme>[] = [
     { value: 'light', label: 'Light', description: 'Bright, high-contrast interface for daytime use.' },
     { value: 'dark', label: 'Dark', description: 'Reduced glare for operational environments and night use.' },
     { value: 'system', label: 'System', description: 'Follow the operating system preference automatically.' },
   ];
 
+  /** ---- Colour vision options ---- */
   const colorVisionOptions: RadioOption<ColorVisionMode>[] = [
     { value: 'default', label: 'Default', description: 'Standard colour presentation.' },
     { value: 'redGreen', label: 'Red-Green Safe', description: 'Palette optimised for red-green colour vision deficiency.' },
@@ -133,16 +192,106 @@ const SettingsPage = () => {
     { value: 'highContrast', label: 'High Contrast', description: 'Strong separation and reduced reliance on colour.' },
   ];
 
+  /** ---- Dashboard landing page options ---- */
+  const landingPageOptions: RadioOption<string>[] = [
+    { value: 'dashboard', label: 'Dashboard' },
+    { value: 'map', label: 'Live Heat Map' },
+    { value: 'forecast', label: '5-Day Forecast' },
+    { value: 'wards', label: 'Ward Risk' },
+    { value: 'analytics', label: 'Health Analytics' },
+    { value: 'alerts', label: 'Alerts' },
+    { value: 'citizen-safety', label: 'Citizen Heat Safety' },
+  ];
+
+  /** ---- Default map view options ---- */
+  const mapViewOptions: RadioOption<string>[] = [
+    { value: 'citywide', label: 'Citywide' },
+    { value: 'wards', label: 'Ward Overview' },
+    { value: 'risk-zones', label: 'Risk Zones' },
+  ];
+
+  /** ---- Data refresh options ---- */
+  const dataRefreshOptions: RadioOption<string>[] = [
+    { value: 'auto', label: 'Automatic' },
+    { value: '5m', label: 'Every 5 minutes' },
+    { value: '15m', label: 'Every 15 minutes' },
+    { value: 'manual', label: 'Manual' },
+  ];
+
+  /** ---- Alert severity options ---- */
+  const alertSeverityOptions: RadioOption<string>[] = [
+    { value: 'high', label: 'High and above' },
+    { value: 'veryHigh', label: 'Very High and above' },
+    { value: 'extreme', label: 'Extreme only' },
+  ];
+
+  /** ---- Heat action plan options ---- */
+  const heatActionOptions = [
+    { id: 'cooling-centre', label: 'Cooling Centre Activation', description: 'Activate or deactivate designated cooling centres.' },
+    { id: 'outdoor-work', label: 'Outdoor Work Advisory', description: 'Modify outdoor work hour recommendations.' },
+    { id: 'healthcare', label: 'Healthcare Preparedness', description: 'Prepare healthcare resources for heat events.' },
+    { id: 'public-advisory', label: 'Public Advisory', description: 'Issue public heat-health advisories.' },
+    { id: 'municipal', label: 'Municipal Operations', description: 'Coordinate municipal response and resource allocation.' },
+  ];
+
+  /** ---- Risk level display format options ---- */
+  const riskDisplayOptions: RadioOption<string>[] = [
+    { value: 'badge-icon', label: 'Badge + Icon + Text', description: 'Full badge with icon and text label.' },
+    { value: 'text-icon', label: 'Text + Icon emphasis', description: 'Text label with supporting icon.' },
+  ];
+
+  /** ---- Current risk level configs (read-only) ---- */
+  const riskLevels: RiskLevel[] = ['low', 'moderate', 'high', 'very_high', 'extreme'];
+
+  /** ---- System status placeholders ---- */
+  const backendStatus = {
+    weather: 'Backend required',
+    health: 'Backend required',
+    riskEngine: 'Backend required',
+    notification: 'Backend required',
+    gis: 'Frontend ready / Backend required',
+    api: 'Not connected',
+  };
+
+  /** ---- Demo data explanation ---- */
+  const demoDataInfo = (
+    <p className="text-sm text-gray-600 dark:text-gray-300">
+      The frontend currently uses demonstration data. Live weather, health, mortality, ward
+      telemetry, and alert data will be supplied by the backend after integration.
+    </p>
+  );
+
+  /** ---- Reset preferences handler ---- */
+  const handleResetPreferences = () => {
+    if (window.confirm('Reset all frontend preferences to defaults? This will reset theme, colour vision, reduced motion, and dashboard preferences. Application data and backend settings will not be affected.')) {
+      // Reset to defaults via the accessibility context
+      setTheme('system');
+      setColorVision('default');
+      setReducedMotion(false);
+      localStorage.removeItem(SETTINGS_STORAGE_KEYS.DASHBOARD_LANDING);
+      localStorage.removeItem(SETTINGS_STORAGE_KEYS.DATA_REFRESH);
+      localStorage.removeItem(SETTINGS_STORAGE_KEYS.MAP_VIEW);
+      localStorage.removeItem(SETTINGS_STORAGE_KEYS.ALERT_SEVERITY);
+      alert('Preferences reset to defaults.');
+    }
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-7xl mx-auto px-4">
+      {/* === SECTION 1: SETTINGS HEADER === */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">System Settings</h1>
-        <p className="text-gray-600 dark:text-gray-400">Configuration & Threshold Management</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">System Settings</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400">
+          Configure dashboard preferences, accessibility, notifications, and heat-risk system behaviour.
+        </p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          Bhubaneswar Heat Early Warning System — Smart India Hackathon 2026 — Problem Statement 83
+        </p>
       </div>
 
-      {/* Accessibility & Display */}
+      {/* === SECTION 2: DISPLAY & ACCESSIBILITY === */}
       <SectionHeader
-        title="Accessibility & Display"
+        title="Display & Accessibility"
         subtitle="Personalise how the dashboard looks and adapts to different visual needs."
       />
 
@@ -152,9 +301,7 @@ const SettingsPage = () => {
           <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Appearance</h2>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Theme
-        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Theme</p>
         <RadioGroup
           name="theme"
           legend="Choose how the dashboard appears"
@@ -163,7 +310,7 @@ const SettingsPage = () => {
           onChange={setTheme}
         />
         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-          Choose how the dashboard appears. The theme applies application-wide and is saved automatically.
+          Choose how the dashboard appears. The theme applies application-wide and is saved automatically to localStorage.
         </p>
       </Card>
 
@@ -181,11 +328,13 @@ const SettingsPage = () => {
           onChange={setColorVision}
         />
         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-          Adjust colours and contrast to improve readability for different types of colour vision.
+          Adjust colours and contrast to improve readability for different types of colour vision. These settings
+          affect only visual presentation — the underlying risk semantics (LOW, MODERATE, HIGH, VERY HIGH, EXTREME)
+          remain unchanged.
         </p>
       </Card>
 
-      {/* Accessibility */}
+      {/* Reduced Motion */}
       <Card>
         <div className="flex items-center space-x-2 mb-4">
           <Accessibility className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
@@ -195,60 +344,416 @@ const SettingsPage = () => {
         <div className="space-y-4">
           <Toggle
             label="Reduced Motion"
-            description="Minimise non-essential animation and transitions across the interface."
+            description="Minimise non-essential animation and transitions across the interface. This also respects your operating system's prefers-reduced-motion setting."
             checked={reducedMotion}
             onChange={setReducedMotion}
             icon={<Move className="h-5 w-5" aria-hidden="true" />}
           />
 
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Reduced Motion also respects your operating system's{' '}
+            Reduced Motion also respects your operating system{' '}
             <code className="font-mono">prefers-reduced-motion</code> setting. Functional feedback is preserved.
           </p>
         </div>
       </Card>
 
-      {/* Risk Display */}
+      {/* === SECTION 3: RISK DISPLAY PREFERENCES === */}
+      <SectionHeader
+        title="Risk Display Preferences"
+        subtitle="Configure how heat risk levels are presented across the application."
+      />
+
+      {/* Risk Classification */}
       <Card>
         <div className="flex items-center space-x-2 mb-4">
           <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Risk Display</h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Risk Classification</h2>
         </div>
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-          Risk labels are always displayed. Critical heat-health risk information is never
-          communicated through colour alone. Each of the five risk levels carries an explicit text
-          label, an icon, and a colour so it remains understandable regardless of colour perception
-          or theme.
+          The application uses five operational risk levels for heat-health risk. These are fixed
+          semantic levels and are not modifiable from the frontend at this stage.
         </p>
-        <RiskLegend showIcons showDescriptions />
+        <div className="space-y-3 text-sm">
+          {riskLevels.map((level) => {
+            const config = getRiskConfig(level);
+            return (
+              <div key={level} className="flex items-center space-x-3">
+                <div
+                  className={`h-4 w-4 rounded border ${config.colors.bg} ${config.colors.border}`}
+                  aria-hidden="true"
+                />
+                <span className="font-medium text-gray-900 dark:text-gray-100">{config.label}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Risk classification thresholds will be configured by the backend / rules engine.
+        </p>
       </Card>
 
-      {/* Accessibility Information */}
+      {/* Risk Display Format */}
       <Card>
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-          About accessibility in this system
-        </h2>
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          The Bhubaneswar Heat Early Warning System is a safety-critical tool. Heat-risk
-          information (LOW, MODERATE, HIGH, VERY HIGH, EXTREME) is always shown using a combination
-          of explicit text labels, icons, and colour. This ensures the critical risk hierarchy
-          remains understandable even when colours are not easily distinguished, in dark theme, or
-          under a colour-vision accessibility setting.
+        <div className="flex items-center space-x-2 mb-4">
+          <Palette className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Risk Display Format</h2>
+        </div>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+          Risk levels are always communicated using a combination of explicit text labels, icons,
+          and colour — never by colour alone. This ensures the critical risk hierarchy remains
+          understandable regardless of colour perception, theme, or accessibility setting.
+        </p>
+        <RadioGroup
+          name="riskDisplayFormat"
+          legend="Select risk level presentation emphasis"
+          options={riskDisplayOptions}
+          value={riskDisplayFormat}
+          onChange={(value) => setRiskDisplayFormat(value)}
+        />
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Presentation format preferences are stored locally and will be applied when the
+          frontend risk display layer supports configuration.
         </p>
       </Card>
 
-      {/* Theme mode demonstration icons */}
-      <div className="flex items-center space-x-6 text-xs text-gray-500 dark:text-gray-400" aria-hidden="true">
-        <span className="inline-flex items-center space-x-1">
-          <SunMedium className="h-4 w-4" /> Light
-        </span>
-        <span className="inline-flex items-center space-x-1">
-          <Moon className="h-4 w-4" /> Dark
-        </span>
-        <span className="inline-flex items-center space-x-1">
-          <Monitor className="h-4 w-4" /> System
-        </span>
-      </div>
+      {/* === SECTION 4: DASHBOARD PREFERENCES === */}
+      <SectionHeader
+        title="Dashboard Preferences"
+        subtitle="Set default views and data refresh behaviour for the application dashboard."
+      />
+
+      {/* Default Landing Page */}
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Default Landing Page</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Select the page that opens when the dashboard is loaded. Preference is stored locally
+          in the browser and will direct routing on subsequent visits.
+        </p>
+        <RadioGroup
+          name="dashboardLanding"
+          legend="Select default landing page"
+          options={landingPageOptions}
+          value={dashboardLanding}
+          onChange={(value) => setDashboardLanding(value)}
+        />
+      </Card>
+
+      {/* Default Map View */}
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Default Map View</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Prepare a default map view preference for the GIS module. Currently prepared for
+          future integration with the backend mapping layer.
+        </p>
+        <RadioGroup
+          name="mapView"
+          legend="Select default map view"
+          options={mapViewOptions}
+          value={mapView}
+          onChange={(value) => setMapView(value)}
+        />{' '}
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Map view preference prepared for GIS integration. Backend mapping data not yet connected.
+        </p>
+      </Card>
+
+      {/* Data Refresh Preference */}
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Data Refresh</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Set automatic data refresh behaviour. This preference is for future live-data integration.
+        </p>
+<RadioGroup
+          name="dataRefresh"
+          legend="Data refresh frequency"
+          options={dataRefreshOptions}
+          value={dataRefresh}
+          onChange={(value) => setDataRefresh(value)}
+        />{' '}
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Automatic refresh is prepared for when live weather and health data is connected via
+          the backend. Currently, data refresh is handled by the demonstration data cycle.
+        </p>
+      </Card>
+
+      {/* === SECTION 5: NOTIFICATION PREFERENCES === */}
+      <SectionHeader
+        title="Notification Preferences"
+        subtitle="Configure alert notification behaviour (backend integration required)."
+      />
+
+      {/* Notification Severity */}
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Notification Severity</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Show dashboard notifications for alerts at or above this severity level. This is a local
+          preference that will be honoured by the frontend until backend notification services are connected.
+        </p>
+        <RadioGroup
+          name="notificationSeverity"
+          legend="Show dashboard notifications for"
+          options={alertSeverityOptions}
+          value={notificationSeverity}
+          onChange={(value) => setNotificationSeverity(value)}
+        />{' '}
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Current status: <span className="font-medium text-blue-600">Frontend preference only</span> —
+          backend alert-trigger thresholds are not yet configured.
+        </p>
+      </Card>
+
+      {/* Notification Channels */}
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Notification Channels</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          The backend notification system does NOT exist yet. Channels are listed for completeness
+          and future integration planning.
+        </p>
+        <div className="space-y-3 text-sm">
+          <div className="flex items-start space-x-3">
+            <div className="flex items-center space-x-2">
+              <Monitor className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Dashboard</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Active — displayed within the application</p>
+            </div>
+          </div>
+          <div className="flex items-start space-x-3">
+            <div className="flex items-center space-x-2">
+              <Mail className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SMS</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Status: <span className="font-medium text-red-600">Backend required</span></p>
+            </div>
+          </div>
+          <div className="flex items-start space-x-3">
+            <div className="flex items-center space-x-2">
+              <MessageSquare className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">WhatsApp</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Status: <span className="font-medium text-red-600">Backend required</span></p>
+            </div>
+          </div>
+          <div className="flex items-start space-x-3">
+            <div className="flex items-center space-x-2">
+              <Monitor className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Public Display</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Active — dashboard-mounted displays</p>
+            </div>
+          </div>
+          <div className="flex items-start space-x-3">
+            <div className="flex items-center space-x-2">
+              <Building className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Municipal Operations</span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Status: <span className="font-medium text-red-600">Backend integration required</span></p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* === SECTION 6: HEAT ACTION PLAN PREFERENCES === */}
+      <SectionHeader
+        title="Heat Action Plan"
+        subtitle="Operational preferences for heat-health response actions (backend / rules engine required)."
+      />
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Operational Actions</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          The platform will eventually support operational actions such as opening cooling centres,
+          modifying outdoor work hours, issuing public advisories, and healthcare preparedness.
+          For now, these settings are represented as backend-dependent configuration options.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm text-gray-600 dark:text-gray-300">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left p-3 font-medium text-gray-900 dark:text-gray-100">Action</th>
+                <th className="text-left p-3 font-medium text-gray-900 dark:text-gray-100">Status</th>
+                <th className="text-left p-3 font-medium text-gray-900 dark:text-gray-100">Configuration</th>
+              </tr>
+            </thead>
+            <tbody>
+              {heatActionOptions.map((option) => (
+                <tr key={option.id} className="border-b border-gray-200 dark:border-gray-700">
+                  <td className="p-3 font-medium text-gray-900 dark:text-gray-100">{option.label}</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 text-xs font-medium text-red-600 bg-red-100 dark:bg-red-900/30 rounded">
+                      Backend required
+                    </span>
+                  </td>
+                  <td className="p-3 text-gray-500 dark:text-gray-400">
+                    Prepared for future operational integration
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          These controls represent operational preferences that will be connected to the backend
+          rules engine after initial frontend integration is complete.
+        </p>
+      </Card>
+
+      {/* === SECTION 7: DATA & PRIVACY === */}
+      <SectionHeader
+        title="Data & Privacy"
+        subtitle="Current data behaviour and local preference storage."
+      />
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Current Data Mode</h2>
+        </div>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+          {"Demonstration Scenario"}
+        </p>
+        {demoDataInfo}
+      </Card>
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Local Preferences</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Display and accessibility preferences (theme, colour vision, reduced motion, dashboard
+          settings) are stored locally in the browser's localStorage under the keys defined by
+          the accessibility configuration. These preferences persist across browser sessions.
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          <strong>Important:</strong> No personal citizen data is stored by this application.
+          The system only stores the user's display and accessibility preferences.
+        </p>
+      </Card>
+
+      {/* === SECTION 8: BACKEND CONNECTION STATUS === */}
+      <SectionHeader
+        title="Backend Connection Status"
+        subtitle="Honest status of system integrations."
+      />
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">System Integration Status</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          The following services are not yet connected. Backend integration is pending.
+        </p>
+        <div className="space-y-3 text-sm">
+          {Object.entries(backendStatus).map(([key, status]) => (
+            <div key={key} className="flex items-start space-x-3">
+              <div className="mt-1.5 h-3 w-3 rounded bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{status}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* === SECTION 9: ABOUT / SYSTEM INFORMATION === */}
+      <SectionHeader
+        title="System Information"
+        subtitle="Application and project metadata."
+      />
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Application</h2>
+        </div>
+        <dl className="space-y-2 text-sm">
+          <div className="flex flex-col sm:flex-row justify-between">
+            <dt className="font-medium text-gray-900 dark:text-gray-100">Application</dt>
+            <dd className="text-gray-600 dark:text-gray-400">Bhubaneswar Heat Early Warning System</dd>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between">
+            <dt className="font-medium text-gray-900 dark:text-gray-100">Purpose</dt>
+            <dd className="text-gray-600 dark:text-gray-400">
+              Localized human thermal stress and heat-health early warning
+            </dd>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between">
+            <dt className="font-medium text-gray-900 dark:text-gray-100">Project</dt>
+            <dd className="text-gray-600 dark:text-gray-400">
+              Smart India Hackathon 2026 — Problem Statement 83
+            </dd>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between">
+            <dt className="font-medium text-gray-900 dark:text-gray-100">Geographic Focus</dt>
+            <dd className="text-gray-600 dark:text-gray-400">Bhubaneswar, Odisha</dd>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between">
+            <dt className="font-medium text-gray-900 dark:text-gray-100">Current Stage</dt>
+            <dd className="text-gray-600 dark:text-gray-400">
+              Frontend demonstration / Backend integration pending
+            </dd>
+          </div>
+        </dl>
+      </Card>
+
+      {/* === SECTION 10: RESET PREFERENCES === */}
+      <SectionHeader
+        title="Reset Preferences"
+        subtitle="Reset all locally stored frontend preferences."
+      />
+
+      <Card>
+        <div className="flex items-center space-x-2 mb-4">
+          <Monitor className="h-5 w-5 text-blue-500 dark:text-blue-400" aria-hidden="true" />
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Reset Preferences</h2>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Reset all frontend preferences (theme, colour vision, reduced motion, dashboard defaults)
+          to their saved defaults. Application data and backend settings are not affected.
+        </p>
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={handleResetPreferences}
+          className="w-full"
+        >
+          Reset Preferences
+        </Button>
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          <strong>This only resets:</strong> locally stored frontend preferences.
+          <br />
+          <strong>This does NOT reset:</strong> application files, backend data, alerts, or database records.
+        </p>
+      </Card>
+
+      {/* === SECTION 11: SAVE / PERSISTENCE BEHAVIOUR === */}
+      {/* Already covered above — immediate persistence for theme, colour vision, reduced motion */}
     </div>
   );
 };

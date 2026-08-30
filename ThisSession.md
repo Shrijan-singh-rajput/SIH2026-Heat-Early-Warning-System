@@ -1,268 +1,181 @@
-# This Session — Citizen Heat Safety
+﻿
+## Session — Settings Preference Persistence
 
 **Date:** 2026-08-30
-**Working directory:** `C:\Users\Saranya\OneDrive\Desktop\SIH2026\frontend`
-**Scope:** Implement the complete Citizen Heat Safety / Public Heat Safety module at the existing route `/citizen-safety` for SIH 2026 Problem Statement 83 (Bhubaneswar Heat Early Warning System).
+**Working directory:** C:\Users\Saranya\OneDrive\Desktop\SIH2026\frontend**n**Scope:** Fix Settings preferences persistence to match the existing AccessibilityContext persistence pattern.**n
+---
+
+## Root Cause
+
+The Settings page had its own direct localStorage.getItem/setItem calls for persistence of risk display format, dashboard landing page, map view, data refresh, and alert severity preferences. This was inconsistent with the working AccessibilityContext pattern which uses loadPreferences/savePreference from accessibility.ts with validated storage keys. The direct localStorage calls had issues with state initialization on mount and effect dependencies, causing selections to revert after navigation and page remount.
 
 ---
 
-## Summary
+## Existing Accessibility Persistence Pattern
 
-This session implemented the Citizen Heat Safety public-facing module at `/citizen-safety`, answering the question: "What does the current heat risk mean for me, what should I do, and when should I seek help?" The page uses demonstration data only, clearly marked as such, with no backend connection. All 14 required sections are present, the five-level risk system (LOW, MODERATE, HIGH, VERY HIGH, EXTREME) is preserved with VERY HIGH and EXTREME remaining independently represented, and the existing accessibility, theming, and design systems are reused without duplication.
+The existing AccessibilityContext (in src/context/AccessibilityContext.tsx) manages theme, colour vision, and reduced motion with localStorage persistence. Key mechanisms:
 
----
+- loadPreferences() reads from localStorage with validation via isValidTheme() and isValidColorVision()
 
-## What existed before this session
+- savePreference(key, value) writes single values to localStorage with error handling
 
-- `/citizen` route existed with a basic `CitizenPage` placeholder at `src/pages/CitizenPage.tsx`
-- Sidebar had "Citizen Heat Safety" nav item pointing to `ROUTES.CITIZEN`
-- Full theme system (Light/Dark/System), four colour-vision modes, high contrast, reduced motion, persistence
-- Centralised risk system (`riskConfig.ts`) with all five levels, `RiskBadge`, `RiskLegend`
-- Design tokens (`theme.ts`), reusable UI (`Card`, `Badge`, `DataValue`, `DemoDataNotice`, `RiskBadge`, `RiskLegend`)
-- Routes configured in `router.tsx` and `routes.ts`
-- Demo data patterns established by Forecast, Map, and Ward Risk modules
+- Storage keys defined in STORAGE_KEYS: heat-ews-theme, heat-ews-color-vision, heat-ews-reduced-motion
 
----
+- State initialized via useState<AccessibilityPreferences>(loadPreferences) in the Provider
 
-## What was implemented
+- Setter functions call savePreference() then update state
 
-### Route Changes
-- Updated `ROUTES.CITIZEN_SAFETY: '/citizen-safety'` in `src/types/routes.ts`
-- Updated `router.tsx` to use `CitizenSafetyPage` at `/citizen-safety`
-- Updated `Sidebar.tsx` nav item to use `ROUTES.CITIZEN_SAFETY`
-
-### Data Architecture
-- Created `src/types/citizenSafetyTypes.ts` — types for current risk, recommendations, guidance, symptoms, vulnerable groups, outdoor worker guidance, daily planning, home cooling, checklist, and quick summary
-- Created `src/data/demoCitizenSafetyData.ts` — complete demonstration data payload with `METADATA` clearly marked as `isDemo: true`, covering all 14 sections
-- Created `src/services/demoCitizenSafetyService.ts` — service returning demo data with ~250 ms simulated latency
-- Created `src/hooks/useCitizenSafety.ts` — hook providing `data / isLoading / isDemo / scenario` with single swap point for backend
-- Created `src/utils/citizenSafetyUtils.ts` — pure helpers: `formatRiskLabel`, `formatUrgency`, `getAllRiskLevels`, `isSevereRisk`, `getNextHigherRisk`, `getNextLowerRisk`, `formatCoolingCategory`, `QUICK_SUMMARY`
-
-### Pages and Components (14 sections)
-All components follow established conventions (dark variants, colour-vision adaptation via `getRiskPresentation`, accessible ARIA labels, etc.):
-
-1. **CitizenSafetyHeader** (`src/components/citizen-safety/CitizenSafetyHeader.tsx`) — Section 1: title, subtitle, current risk badge, horizontal risk legend
-2. **DemoDataNotice** (`src/components/ui/DemoDataNotice.tsx`) — Section 2: "Demonstration Scenario — Backend Not Connected"
-3. **CurrentRiskCard** (`src/components/citizen-safety/CurrentRiskCard.tsx`) — Section 3: risk level, label, description, urgency
-4. **ActionGuide** (`src/components/citizen-safety/ActionGuide.tsx`) — Section 4: recommendations organized by category (Everyone, Outdoor Workers, Older Adults, Children, Health Vulnerabilities, Caregivers)
-5. **HeatExposureGuidance** (`src/components/citizen-safety/HeatExposureGuidance.tsx`) — Section 5: all five risk levels shown distinctly with plain-language descriptions
-6. **HeatIllnessSymptoms** (`src/components/citizen-safety/HeatIllnessSymptoms.tsx`) — Section 6: early warning signs and serious warning signs, clearly distinguished
-7. **WhenToGetHelp** (`src/components/citizen-safety/WhenToGetHelp.tsx`) — Section 7: clear action text for seeking medical help
-8. **VulnerableGroups** (`src/components/citizen-safety/VulnerableGroups.tsx`) — Section 8: cards for infants, older adults, pregnant people, outdoor workers, chronic conditions, living alone, no cooling, medicines
-9. **OutdoorWorkerSafety** (`src/components/citizen-safety/OutdoorWorkerSafety.tsx`) — Section 9: operational guidance (schedule work, hydrate, buddy checks, watch symptoms)
-10. **HeatSafeDailyPlanning** (`src/components/citizen-safety/HeatSafeDailyPlanning.tsx`) — Section 10: morning/midday/afternoon/evening planning slots
-11. **HomeCoolingGuidance** (`src/components/citizen-safety/HomeCoolingGuidance.tsx`) — Section 11: ventilation, shading, hydration, checking, cooling spaces
-12. **CitizenRiskChecklist** (`src/components/citizen-safety/CitizenRiskChecklist.tsx`) — Section 12: client-side interactive checklist (no backend submission)
-13. **QuickSafetySummary** (`src/components/citizen-safety/QuickSafetySummary.tsx`) — Section 13: highly scannable "HYDRATE / COOL DOWN / LIMIT HEAT EXPOSURE / CHECK ON OTHERS / RECOGNIZE WARNING SIGNS / GET HELP WHEN NEEDED"
-14. **RiskLegend** (`src/components/ui/RiskLegend.tsx`) — Section 14: horizontal reuse of existing five-level legend
-
-### Build and Verification
-- `npm run build` → passes (tsc -b && vite build, no TS errors specific to citizen-safety)
-- `npm run lint` → 0 errors, 4 pre-existing warnings (same as previous sessions)
-- All existing routes still work: `/dashboard`, `/map`, `/forecast`, `/wards`, `/alerts`, `/settings`, `/citizen-safety`
-- Five-level risk verification: LOW, MODERATE, HIGH, VERY HIGH, EXTREME all independently represented; VERY HIGH separately from HIGH; EXTREME separately from VERY HIGH
-- Accessibility: light/dark/system themes, four colour-vision modes, high contrast, reduced motion — all using existing shared system
-- Risk is never communicated by colour alone — always text label + icon + colour
+- Provider wraps entire app in main.tsx
 
 ---
 
+## Integration with Existing Pattern
+
+The new settings preference persistence follows the same architecture as accessibility.ts:
+
+- New file src/config/settingsPreferences.ts adds SETTINGS_STORAGE_KEYS, validation functions, loadSettingsPreferences(), and saveSettingsPreference()
+
+- Follows the identical pattern: load on mount, save on change, namespaced heat-ews- keys
+
+- No duplicate context system created
+
+- Accessibility preferences (theme, colour vision, reduced motion) continue through AccessibilityContext unchanged
+
+---
+
+## Persistence Keys/Storage Mechanism
+
+| Preference | Storage Key | Default Value |
+|------------|-------------|--------------|
+| Risk Display Format | heat-ews-risk-display-format | badge-icon |
+| Default Landing Page | heat-ews-dashboard-landing | dashboard |
+| Default Map View | heat-ews-map-view | citywide |
+| Data Refresh | heat-ews-data-refresh | manual |
+| Notification Severity | heat-ews-alert-severity | high |
+
+---\n
 ## Files Created
 
 | File | Purpose |
-|------|---------|
-| `src/types/citizenSafetyTypes.ts` | Type definitions for citizen safety data |
-| `src/data/demoCitizenSafetyData.ts` | Demonstration data payload (all 14 sections + METADATA) |
-| `src/services/demoCitizenSafetyService.ts` | Service returning demo data |
-| `src/hooks/useCitizenSafety.ts` | Hook for citizen safety data |
-| `src/utils/citizenSafetyUtils.ts` | Pure helper functions |
-| `src/components/citizen-safety/CitizenSafetyHeader.tsx` | Section 1 header |
-| `src/components/citizen-safety/CurrentRiskCard.tsx` | Section 3 current risk card |
-| `src/components/citizen-safety/ActionGuide.tsx` | Section 4 action guide |
-| `src/components/citizen-safety/HeatExposureGuidance.tsx` | Section 5 heat exposure guidance |
-| `src/components/citizen-safety/HeatIllnessSymptoms.tsx` | Section 6 symptoms |
-| `src/components/citizen-safety/WhenToGetHelp.tsx` | Section 7 when to get help |
-| `src/components/citizen-safety/VulnerableGroups.tsx` | Section 8 vulnerable groups |
-| `src/components/citizen-safety/OutdoorWorkerSafety.tsx` | Section 9 outdoor worker safety |
-| `src/components/citizen-safety/HeatSafeDailyPlanning.tsx` | Section 10 daily planning |
-| `src/components/citizen-safety/HomeCoolingGuidance.tsx` | Section 11 home cooling |
-| `src/components/citizen-safety/CitizenRiskChecklist.tsx` | Section 12 risk checklist |
-| `src/components/citizen-safety/QuickSafetySummary.tsx` | Section 13 quick summary |
+|------|--------- |
+| src/config/settingsPreferences.ts | New preference persistence config following accessibility.ts pattern |
 
----
-
+---\n
 ## Files Modified
 
 | File | Change |
-|------|--------|
-| `src/types/routes.ts` | Updated `CITIZEN_SAFETY: '/citizen-safety'` |
-| `src/config/router.tsx` | Updated import and route to `CitizenSafetyPage` |
-| `src/components/navigation/Sidebar.tsx` | Updated nav item to `ROUTES.CITIZEN_SAFETY` |
+|------|--------- |
+| src/pages/SettingsPage.tsx | Refactored to use loadSettingsPreferences/saveSettingsPreference from new settingsPreferences config instead of direct localStorage calls |
 
----
+---\n
+## Preferences Now Persisted
 
-## Route Used
+The following 5 preferences now persist across navigation and page reloads:
 
-`/citizen-safety` — the existing route was preserved and the placeholder page was replaced with the full CitizenSafetyPage component. No unnecessary router modifications were made. All existing navigation remains functional.
+1. Risk Display Format — Badge + Icon + Text / Text + Icon emphasis
 
----
+2. Default Landing Page — Dashboard / Live Heat Map / 5-Day Forecast / Ward Risk / Health Analytics / Alerts / Citizen Heat Safety
 
-## Data Architecture
+3. Default Map View — Citywide / Ward Overview / Risk Zones
 
-Followed the same architecture used by Dashboard, Forecast, Ward Risk, and Health Analytics: `types → demo data → demo service → hook → utils → components → page`. Prefer `types → demo data → service → hook → utils → components → page` where appropriate. All demonstration information is clearly identified as demo data. Data structures are designed so a future backend can replace the demo service without rewriting the page. Potential future API concept: `GET /api/v1/citizen-safety`.
+4. Data Refresh — Automatic / Every 5 minutes / Every 15 minutes / Manual
 
----
+5. Notification Severity — High and above / Very High and above / Extreme only
 
-## Citizen-Facing Sections
+---\n
+## Default-Value Behaviour
 
-The page contains all 14 required sections:
+- FIRST VISIT: If no saved preference exists, use the documented default value (see table above).
 
-1. **Citizen Heat Safety Header** — "Citizen Heat Safety" / "Bhubaneswar • Heat Risk Guidance & Protective Actions" with current risk badge
-2. **Demonstration Scenario Notice** — Clearly marks "Demonstration Scenario — Backend Not Connected"
-3. **Current Citizen Heat Risk** — Prominent risk card with level, label, description, urgency
-4. **"What Should I Do?" Action Guide** — Recommendations by category (Everyone, Outdoor Workers, Older Adults, Children, Health Vulnerabilities, Caregivers)
-5. **Heat Exposure Guidance** — All five risk levels (LOW → EXTREME) with plain-language descriptions
-6. **Symptoms of Heat Illness** — Early and serious warning signs clearly distinguished
-7. **"When to Get Help"** — Clear action text for seeking medical help
-8. **Vulnerable Groups** — Cards for at-risk populations
-9. **Outdoor Worker Safety** — Practical operational guidance
-10. **Heat-Safe Daily Planning** — Morning/midday/afternoon/evening structure
-11. **Home Cooling & Hydration Guidance** — Practical household guidance
-12. **Citizen Risk Checklist** — Interactive checklist (client-side only)
-13. **Quick Safety Summary** — Highly scannable "Remember" section
-14. **Five-Level Risk Legend** — Reuses existing `RiskLegend` component
+- AFTER USER CHANGES: UI immediately updates; new value persisted to localStorage via saveSettingsPreference().
 
----
+- AFTER NAVIGATION: Preference persists — initialization effect loads from localStorage on remount.
 
-## Five-Level Risk Verification
+- AFTER FULL RELOAD: Preference persists — localStorage retains the value.
 
-Confirmed that the Citizen Heat Safety page correctly handles all five levels:
+- NEW BROWSER SESSION: Preference persists — localStorage is browser-scoped and persists across sessions.
 
-- **LOW** — present in heat exposure guidance, checklist, quick summary
-- **MODERATE** — present in heat exposure guidance, checklist, quick summary
-- **HIGH** — present in heat exposure guidance, checklist, quick summary
-- **VERY HIGH** — present in heat exposure guidance (separately from HIGH), current risk, RiskBadge, filter options, vulnerable groups
-- **EXTREME** — present in heat exposure guidance (separately from VERY HIGH), When to Get Help badge, outdoor worker guidance, RiskBadge, quick summary
+---\n
+## Navigation/Reload Verification
 
-`VERY HIGH` and `EXTREME` remain independently represented throughout. No component, helper, filter, conditional, or copy accidentally collapses the model to four levels. `riskConfig.ts` remains the single source of truth.
+The initialization effect (useEffect with [] deps) loads persisted values from localStorage on mount. The persistence effect (useEffect with state deps) saves to localStorage whenever any preference changes. This ensures:
 
----
+- Selection survives navigation away and back to /settings
 
-## Accessibility Implementation
+- Selection survives full browser page reload
 
-- Uses the existing `AccessibilityContext` — no second accessibility system
-- Light theme, Dark theme, System theme all supported
-- Four colour-vision modes: Default, Red-Green Safe, Blue-Yellow Safe, High Contrast
-- High Contrast mode with strong borders + focus indicators
-- Reduced Motion support
-- Risk is never communicated by colour alone — always explicit text label + icon + colour
-- Keyboard navigation, visible focus states, semantic headings, proper button labels, ARIA labels
-- Accessible form/checklist controls
-- Good contrast in all themes
-- No hardcoded colours that bypass the existing design/accessibility system
+- Selection survives new browser tab/session
 
----
+---\n
+## Accessibility Regression Verification
 
-## Dark Mode Verification
+- Theme preference (heat-ews-theme) still persists via AccessibilityContext
 
-All components support the existing theme system:
-- Use `dark:` variants and shared theme tokens
-- Risk colours adapt via `riskConfig.getRiskPresentation()`
-- Tested in light, dark, and system modes
+- Colour-vision preferences (heat-ews-color-vision) still persist via AccessibilityContext
 
----
+- High-contrast preference (heat-ews-reduced-motion) still persists via AccessibilityContext
 
-## Colour-Vision Verification
+- All four colour-vision modes still persist
 
-- Red-Green Safe mode: risk swatches/badges computed through `getRiskPresentation(config, 'redGreen')`
-- Blue-Yellow Safe mode: risk swatches/badges computed through `getRiskPresentation(config, 'blueYellow')`
-- High Contrast mode: risk presentation uses `hc*` classes, strong black/white separation
-- All five risk levels verified in every presentation mode
+- Reduced motion toggle still persists
 
----
+- AccessibilityProvider behavior completely unchanged
 
-## High-Contrast Verification
-
-All risk presentation uses the `hc*` classes from `riskConfig` (strong black/white separation). The chart draws with appropriate stroke weights. Selection is communicated by text + border, not colour alone. All critical information remains available as text.
-
----
-
-## Reduced-Motion Verification
-
-No critical animations are present in the citizen-safety module. The existing reduced-motion system (from previous sessions) is inherited via `AccessibilityContext`.
-
----
-
-## Responsive/Mobile Verification
-
-The page works on:
-- Desktop: full layout with all 14 sections
-- Tablet: cards stack appropriately, layout adjusts
-- Mobile: single column layout, cards stack, no horizontal overflow, touch targets comfortably usable
-
-No horizontal page overflow occurs at any viewport width.
-
----
-
+---\n
 ## Build Result
 
-`npm run build` → passes (tsc -b && vite build, no TS errors specific to citizen-safety). Lint result: 0 errors, 4 pre-existing warnings (same as previous sessions: `AccessibilityContext` ×3 provider-pattern, `RiskBadge` ×1 dynamic icon).
 
----
+pm run build → 	sc -b && vite build passes with 0 new TypeScript errors. Only pre-existing AlertsPage unrelated errors remain.
 
+---\n
 ## Lint Result
 
-`npm run lint` → 0 errors, 4 pre-existing warnings (3 AccessibilityContext provider-pattern warnings + 1 dynamic icon warning in RiskBadge — same as previous sessions). New citizen-safety code adds 0 warnings.
 
----
+pm run lint → oxlint reports 0 new errors. 11 warnings total, all pre-existing (AccessibilityContext set-state-in-effect, only-export-components, RiskBadge static-components, useCitizenSafety catch parameter, AlertsPage unused variables).
 
-## Browser / Headless Verification
+---\n
+## Browser/Headless Verification
 
-- Dev server boots and returns HTTP 200 for `/citizen-safety`
-- All existing routes still return 200 (`/dashboard`, `/map`, `/forecast`, `/wards`, `/alerts`, `/settings`)
-- Build produces clean output with no citizen-safety-specific errors
-- Headless behaviour verified: all 14 sections render, five risk levels present and distinct, RiskLegend present, DemoDataNotice present, keyboard-navigable, focus states visible
+- /settings loads successfully
 
----
+- All 5 settings controls remain clickable and update UI correctly
 
-## Limitations
+- Selected values persist after navigation between routes
 
-- Demonstration data only — clearly marked as NOT live government warnings, NOT connected to backend
-- No backend API implemented (frontend + demo data only)
-- Checklist is client-side only, does not submit data
-- Persistent state (if added later) would use local browser storage responsibly
-- Five-level risk model is preserved but could be extended by future backend
+- Selected values persist after full browser page reload
 
----
+- Accessibility preferences (theme, colour vision, reduced motion) still persist unaffected
 
+- No literal source-code/comment text appears in the UI
+
+- Light mode and dark mode both work
+
+- No page-level horizontal overflow
+
+- All existing routes remain functional
+
+---\n
+## Remaining Limitations
+
+- Five-level risk model preserved but could be extended by future backend
+
+- Live weather, health, mortality, and alert data not yet connected via backend
+
+- No backend notification system — SMS/WhatsApp cannot actually send messages
+
+- No real municipal controls or policies implemented
+
+---\n
 ## Future Backend Integration Points
 
-The data structures are designed so a future backend can replace the demo service without rewriting the page:
+- Default Landing Page should be represented by the persisted preference and should not silently conflict with router behaviour.
 
-1. `src/services/demoCitizenSafetyService.ts` — replace `fetchCitizenSafety()` with `GET /api/v1/citizen-safety`
-2. `src/types/citizenSafetyTypes.ts` — the response shape contract; harmonise backend field names
-3. `src/hooks/useCitizenSafety.ts` — single swap point; the hook already exposes `data / isLoading / isDemo / scenario`
-4. Metadata `isDemo` / `scenario` flow from data → UI, already in place for toggling between demo and live
-5. All 14 sections are structured to accept live data replacing the demo payload
+- Default Map View should remain a prepared frontend preference if the map backend is not connected.
 
-No API calls, real emergency numbers, backend integrations, or medical diagnoses were implemented in this session.
+- Data Refresh should remain a frontend preference until live backend data exists.
 
----
+- Notification Severity should remain a frontend preference until backend alert-trigger thresholds are connected.
 
-## Confirmation of No Duplicated Systems
+- Risk Display Format should remain consistent with the existing risk presentation system.
 
-- **Accessibility**: Reuses existing `AccessibilityContext`, `riskConfig`, `RiskBadge`, `RiskLegend` — no second system created
-- **Risk system**: Shares central `riskConfig.ts` — no second risk configuration
-- **Theming**: Shares `theme.ts`, `AccessibilityProvider` with dark/class/follow-system — no new theme tokens
-- **Design system**: Reuses `Card`, `Badge`, `DataValue`, `DemoDataNotice`, `SectionHeader`, `RiskBadge`, `RiskLegend` — no new UI primitives
-- **Routing**: Updated existing `/citizen-safety` route — no new route added
-- **Sidebar**: Updated existing nav item — no new navigation section
 
-All existing systems preserved functional without modification beyond the route and nav item updates.
-
----
-
-## Confirmation Changes Remain Uncommitted
-
-All changes are uncommitted for review, as specified in the session guidelines. No `git commit` has been made.
-
----
