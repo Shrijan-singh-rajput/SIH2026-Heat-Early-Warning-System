@@ -10,6 +10,24 @@ import AlertsPage from '../pages/AlertsPage';
 import CitizenSafetyPage from '../pages/CitizenSafetyPage';
 import SettingsPage from '../pages/SettingsPage';
 import { ROUTES } from '../types/routes';
+import { loadSettingsPreferences } from './settingsPreferences';
+
+const LANDING_ROUTE_MAP: Record<string, string> = {
+  dashboard: ROUTES.DASHBOARD,
+  map: ROUTES.MAP,
+  forecast: ROUTES.FORECAST,
+  wards: ROUTES.WARDS,
+  analytics: ROUTES.ANALYTICS,
+  alerts: ROUTES.ALERTS,
+  'citizen-safety': ROUTES.CITIZEN_SAFETY,
+};
+
+function LandingRedirect() {
+  const stored = loadSettingsPreferences();
+  const landing = stored.dashboardLanding ?? 'dashboard';
+  const target = LANDING_ROUTE_MAP[landing] ?? ROUTES.DASHBOARD;
+  return <Navigate to={target} replace />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +36,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+        element: <LandingRedirect />,
       },
       {
         path: ROUTES.DASHBOARD,

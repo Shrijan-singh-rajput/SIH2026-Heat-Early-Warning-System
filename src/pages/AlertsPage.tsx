@@ -30,6 +30,7 @@ import { useAccessibility } from '../context/AccessibilityContext';
 import type { ColorVisionMode } from '../config/accessibility';
 import { Bell, AlertOctagon, Zap, Info, AlertTriangle, Building2 } from 'lucide-react';
 import { useState } from 'react';
+import { loadSettingsPreferences } from '../config/settingsPreferences';
 
 /* Types for filter state */
 type AlertFilterRisk = 'all' | 'low' | 'moderate' | 'high' | 'very_high' | 'extreme';
@@ -43,6 +44,15 @@ interface AlertFilterState {
   search: string;
   ward: string;
 }
+
+/* Severity order for notification threshold filtering */
+const SEVERITY_ORDER: Record<string, number> = {
+  low: 1,
+  moderate: 2,
+  high: 3,
+  very_high: 4,
+  extreme: 5,
+};
 
 /* Demo filter options - derived from the five-level risk model */
 const RISK_FILTER_OPTIONS = [
@@ -88,6 +98,11 @@ const AlertsPage = () => {
     ward: '',
   });
 
+  /* --- Notification severity threshold --- */
+  const storedSettings = loadSettingsPreferences();
+  const alertSeverity = storedSettings.alertSeverity ?? 'high';
+  const severityThreshold = SEVERITY_ORDER[alertSeverity === 'veryHigh' ? 'very_high' : alertSeverity] ?? 3;
+
   /* --- Computed / filtered alerts --- */
   const filteredAlerts = useMemo(() => {
     const riskLevel = filters.risk === 'all' ? null : filters.risk;
@@ -97,6 +112,10 @@ const AlertsPage = () => {
     const wardFilter = filters.ward.trim().toLowerCase();
 
     return (data?.alerts ?? []).filter((alert) => {
+      /* Notification severity threshold filter */
+      const alertSeverityLevel = SEVERITY_ORDER[alert.severity] ?? 0;
+      const matchesSeverityThreshold = alertSeverityLevel >= severityThreshold;
+
       /* Risk level filter */
       const matchesRisk =
         riskLevel === null || alert.severity === riskLevel;
@@ -124,6 +143,7 @@ const AlertsPage = () => {
         alert.area.toLowerCase().includes(wardFilter);
 
       return (
+        matchesSeverityThreshold &&
         matchesRisk &&
         matchesStatus &&
         matchesPriority &&
@@ -131,7 +151,7 @@ const AlertsPage = () => {
         matchesWard
       );
     });
-  }, [data, filters]);
+  }, [data, filters, severityThreshold]);
 
   /* --- Alert selection state --- */
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);

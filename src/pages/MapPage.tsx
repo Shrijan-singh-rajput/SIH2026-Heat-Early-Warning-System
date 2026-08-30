@@ -7,6 +7,13 @@ import { DemoDataNotice, LoadingState, RiskLegend } from '../components/ui';
 import HeatRiskMap from '../components/map/HeatRiskMap';
 import MapRiskSummary from '../components/map/MapRiskSummary';
 import SelectedZonePanel from '../components/map/SelectedZonePanel';
+import { loadSettingsPreferences } from '../config/settingsPreferences';
+
+const MAP_VIEW_TO_LAYER: Record<string, MapLayerId> = {
+  citywide: 'heatRisk',
+  wards: 'vulnerability',
+  'risk-zones': 'population',
+};
 
 /**
  * MapPage - Live Heat Map
@@ -22,8 +29,11 @@ const MapPage = () => {
   const { data, isLoading, isDemo, scenario } = useRiskZones();
   const { colorVision, effectiveTheme } = useAccessibility();
 
+  const storedSettings = loadSettingsPreferences();
+  const defaultLayer = MAP_VIEW_TO_LAYER[storedSettings.mapView ?? 'citywide'] ?? 'heatRisk';
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [layerId, setLayerId] = useState<MapLayerId>('heatRisk');
+  const [layerId, setLayerId] = useState<MapLayerId>(defaultLayer);
 
   const features = useMemo(() => data?.features ?? [], [data]);
   const selected = useMemo(

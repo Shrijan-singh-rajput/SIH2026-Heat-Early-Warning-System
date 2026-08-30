@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState } from 'react';
 import { Accessibility, MessageSquare, Mail, Building, Palette, Eye, Monitor, Move, Zap, Info, Check, Shield } from 'lucide-react';
 import { Card, SectionHeader, Button } from '../components/ui';
 import { useAccessibility } from '../context/AccessibilityContext';
@@ -141,41 +141,35 @@ const SettingsPage = () => {
   const { theme, setTheme, colorVision, setColorVision, reducedMotion, setReducedMotion } =
     useAccessibility();
 
-  /** ---- Persisted settings state ---- */
-  const [riskDisplayFormat, setRiskDisplayFormat] = useState<string>('badge-icon');
-  const [dashboardLanding, setDashboardLanding] = useState<string>('dashboard');
-  const [mapView, setMapView] = useState<string>('citywide');
-  const [dataRefresh, setDataRefresh] = useState<string>('manual');
-  const [notificationSeverity, setNotificationSeverity] = useState<string>('high');
+  /** ---- Persisted settings state (lazy-init from localStorage, matching AccessibilityContext pattern) ---- */
+  const _stored = loadSettingsPreferences();
+  const [riskDisplayFormat, setRiskDisplayFormatState] = useState<string>(() => _stored.riskDisplayFormat ?? 'badge-icon');
+  const [dashboardLanding, setDashboardLandingState] = useState<string>(() => _stored.dashboardLanding ?? 'dashboard');
+  const [mapView, setMapViewState] = useState<string>(() => _stored.mapView ?? 'citywide');
+  const [dataRefresh, setDataRefreshState] = useState<string>(() => _stored.dataRefresh ?? 'manual');
+  const [notificationSeverity, setNotificationSeverityState] = useState<string>(() => _stored.alertSeverity ?? 'high');
 
-  /** Initialize settings preferences from persisted localStorage values */
-  useEffect(() => {
-    const stored = loadSettingsPreferences();
-    if (stored.riskDisplayFormat !== undefined) {
-      setRiskDisplayFormat(stored.riskDisplayFormat);
-    }
-    if (stored.dashboardLanding !== undefined) {
-      setDashboardLanding(stored.dashboardLanding);
-    }
-    if (stored.mapView !== undefined) {
-      setMapView(stored.mapView);
-    }
-    if (stored.dataRefresh !== undefined) {
-      setDataRefresh(stored.dataRefresh);
-    }
-    if (stored.alertSeverity !== undefined) {
-      setNotificationSeverity(stored.alertSeverity);
-    }
-  }, []);
-
-  /** Persist settings preferences to localStorage when they change */
-  useEffect(() => {
-    saveSettingsPreference(SETTINGS_STORAGE_KEYS.RISK_DISPLAY_FORMAT, riskDisplayFormat);
-    saveSettingsPreference(SETTINGS_STORAGE_KEYS.DASHBOARD_LANDING, dashboardLanding);
-    saveSettingsPreference(SETTINGS_STORAGE_KEYS.MAP_VIEW, mapView);
-    saveSettingsPreference(SETTINGS_STORAGE_KEYS.DATA_REFRESH, dataRefresh);
-    saveSettingsPreference(SETTINGS_STORAGE_KEYS.ALERT_SEVERITY, notificationSeverity);
-  }, [riskDisplayFormat, dashboardLanding, mapView, dataRefresh, notificationSeverity]);
+  /** Save-and-set helpers (single source of truth, same pattern as AccessibilityContext setters) */
+  const setRiskDisplayFormat = (value: string) => {
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.RISK_DISPLAY_FORMAT, value);
+    setRiskDisplayFormatState(value);
+  };
+  const setDashboardLanding = (value: string) => {
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.DASHBOARD_LANDING, value);
+    setDashboardLandingState(value);
+  };
+  const setMapView = (value: string) => {
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.MAP_VIEW, value);
+    setMapViewState(value);
+  };
+  const setDataRefresh = (value: string) => {
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.DATA_REFRESH, value);
+    setDataRefreshState(value);
+  };
+  const setNotificationSeverity = (value: string) => {
+    saveSettingsPreference(SETTINGS_STORAGE_KEYS.ALERT_SEVERITY, value);
+    setNotificationSeverityState(value);
+  };
 
   /** ---- Theme options ---- */
   const themeOptions: RadioOption<Theme>[] = [
@@ -264,14 +258,16 @@ const SettingsPage = () => {
   /** ---- Reset preferences handler ---- */
   const handleResetPreferences = () => {
     if (window.confirm('Reset all frontend preferences to defaults? This will reset theme, colour vision, reduced motion, and dashboard preferences. Application data and backend settings will not be affected.')) {
-      // Reset to defaults via the accessibility context
+      // Reset accessibility to defaults via the context
       setTheme('system');
       setColorVision('default');
       setReducedMotion(false);
-      localStorage.removeItem(SETTINGS_STORAGE_KEYS.DASHBOARD_LANDING);
-      localStorage.removeItem(SETTINGS_STORAGE_KEYS.DATA_REFRESH);
-      localStorage.removeItem(SETTINGS_STORAGE_KEYS.MAP_VIEW);
-      localStorage.removeItem(SETTINGS_STORAGE_KEYS.ALERT_SEVERITY);
+      // Reset settings preferences to defaults (save + set state)
+      setRiskDisplayFormat('badge-icon');
+      setDashboardLanding('dashboard');
+      setMapView('citywide');
+      setDataRefresh('manual');
+      setNotificationSeverity('high');
       alert('Preferences reset to defaults.');
     }
   };
@@ -448,8 +444,9 @@ const SettingsPage = () => {
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Default Map View</h2>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Prepare a default map view preference for the GIS module. Currently prepared for
-          future integration with the backend mapping layer.
+          Select the default data layer shown on the Live Heat Map. Citywide shows overall
+          heat risk, Ward Overview shows vulnerability data, and Risk Zones shows population
+          exposure. The selected layer will be active when you navigate to the map.
         </p>
         <RadioGroup
           name="mapView"
@@ -459,7 +456,8 @@ const SettingsPage = () => {
           onChange={(value) => setMapView(value)}
         />{' '}
         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-          Map view preference prepared for GIS integration. Backend mapping data not yet connected.
+          Map view preference sets the initial data layer. Full GIS integration with
+          backend mapping data is planned for future development.
         </p>
       </Card>
 

@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import type { RiskLevel } from '../../types';
 import { getRiskConfig, getRiskPresentation, getDefaultDarkClasses } from '../../config/riskConfig';
 import { TYPOGRAPHY, RADIUS } from '../../config/theme';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { SETTINGS_STORAGE_KEYS } from '../../config/settingsPreferences';
 import { getRiskIcon } from './riskIcons';
 
 interface RiskBadgeProps {
@@ -13,6 +15,19 @@ interface RiskBadgeProps {
 }
 
 /**
+ * Read risk display format from localStorage.
+ * 'badge-icon' = full coloured badge with icon and text (default)
+ * 'text-icon'  = text label with supporting icon, no coloured background
+ */
+function getRiskDisplayFormat(): string {
+  try {
+    const v = localStorage.getItem(SETTINGS_STORAGE_KEYS.RISK_DISPLAY_FORMAT);
+    if (v === 'badge-icon' || v === 'text-icon') return v;
+  } catch { /* localStorage unavailable */ }
+  return 'badge-icon';
+}
+
+/**
  * RiskBadge - Risk level indicator with accessible text label and icon
  *
  * ACCESSIBILITY: Risk is never communicated by colour alone.
@@ -20,6 +35,9 @@ interface RiskBadgeProps {
  * - Icons provide visual differentiation beyond colour
  * - Colour presentation adapts to the active colour-vision mode
  * - Supports both light and dark themes
+ * - Respects the 'riskDisplayFormat' preference:
+ *     badge-icon → full coloured badge with icon and text
+ *     text-icon  → text label with icon, no coloured badge background
  */
 const RiskBadge = ({
   level,
@@ -30,6 +48,7 @@ const RiskBadge = ({
 }: RiskBadgeProps) => {
   const config = getRiskConfig(level);
   const { colorVision } = useAccessibility();
+  const riskDisplayFormat = useMemo(() => getRiskDisplayFormat(), []);
 
   const presentation = getRiskPresentation(config, colorVision);
   const darkPresentation = getDefaultDarkClasses(config, colorVision);
@@ -48,6 +67,23 @@ const RiskBadge = ({
 
   const IconComponent = getRiskIcon(config);
 
+  if (riskDisplayFormat === 'text-icon') {
+    // Text + Icon emphasis: text label with icon, no coloured badge background
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-medium ${TYPOGRAPHY.badge} ${presentation.text} ${darkPresentation.text} ${sizeClasses} ${className}`}
+        role="status"
+        aria-label={`Risk level: ${config.label}`}
+      >
+        {showIcon && IconComponent && (
+          <IconComponent size={iconSize} className="flex-shrink-0" aria-hidden="true" />
+        )}
+        {showLabel ? config.label : config.id}
+      </span>
+    );
+  }
+
+  // Default: Badge + Icon + Text — full coloured badge
   return (
     <span
       className={`inline-flex items-center border ${RADIUS.md} ${TYPOGRAPHY.badge} ${presentation.bg} ${presentation.text} ${presentation.border} ${darkPresentation.bg} ${darkPresentation.text} ${darkPresentation.border} ${sizeClasses} ${className}`}
