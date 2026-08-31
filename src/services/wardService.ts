@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { API_ENDPOINTS } from '../config/api';
+
 import { toRiskLevel } from '../utils/apiMappers';
 import type { WardRiskCollection, WardRiskEntry } from '../types/wardTypes';
 
