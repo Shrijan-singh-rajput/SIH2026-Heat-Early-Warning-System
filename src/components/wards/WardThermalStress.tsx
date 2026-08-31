@@ -10,7 +10,7 @@ interface WardThermalStressProps {
 interface ThermalLineProps {
   label: string;
   metric: 'utci' | 'wbgt' | 'heatIndex';
-  value: number;
+  value: number |null;
   risk: WardRiskEntry['risk'];
   unit: string;
 }
@@ -28,6 +28,9 @@ const WardThermalStress = ({ ward }: WardThermalStressProps) => {
     { label: 'WBGT', metric: 'wbgt', value: wbgt, risk: ward.risk, unit: '°C' },
     { label: 'Heat Index', metric: 'heatIndex', value: heatIndex, risk: ward.risk, unit: '°C' },
   ];
+  // WBGT and Heat Index are not currently computed by the backend for
+  // forecast data (only UTCI is available for forecasts). Omit these
+  // rows rather than showing a misleading 0°C.
 
   return (
     <section aria-label="Thermal stress details">

@@ -70,6 +70,6 @@ export function useAlerts() {
     isDemo: dataMode === 'demo',
     scenario: dataMode === 'demo'
       ? (data?.metadata.scenario ?? '')
-      : 'Real Mode — Backend Not Connected',
+      : (data?.metadata.scenario ?? 'Real Mode — Backend Not Connected'),
   };
 }

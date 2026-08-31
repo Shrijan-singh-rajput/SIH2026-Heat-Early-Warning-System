@@ -34,9 +34,9 @@ export function useWardRisk() {
           if (active) setIsLoading(false);
         });
     } else {
-      wardService.getWards()
-        .then((result: any) => { if (active) setData(result); })
-        .catch((error: any) => console.error('Failed to load ward risk:', error))
+      wardService.getWardRiskCollection()
+        .then((result) => { if (active) setData(result); })
+        .catch((error) => console.error('Failed to load ward risk:', error))
         .finally(() => { if (active) setIsLoading(false); });
     }
 

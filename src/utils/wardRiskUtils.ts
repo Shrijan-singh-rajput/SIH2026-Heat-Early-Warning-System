@@ -111,9 +111,9 @@ export function compareWards(
     case 'utci':
       return a.thermal.utci - b.thermal.utci;
     case 'wbgt':
-      return a.thermal.wbgt - b.thermal.wbgt;
+      return (a.thermal.wbgt ?? 0) - (b.thermal.wbgt ?? 0);
     case 'temperature':
-      return a.environmental.temperature - b.environmental.temperature;
+      return (a.environmental.temperature ?? 0) - (b.environmental.temperature ?? 0);
     case 'vulnerability':
       return a.vulnerability.vulnerabilityScore - b.vulnerability.vulnerabilityScore;
     case 'population':

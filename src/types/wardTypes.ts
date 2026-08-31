@@ -19,9 +19,9 @@ export type WardTrend = 'increasing' | 'stable' | 'decreasing';
 export interface WardThermalStress {
   utci: number; // °C — Universal Thermal Climate Index
   utciRisk: RiskLevel;
-  wbgt: number; // °C — Wet Bulb Globe Temperature
+  wbgt: number | null; // °C — Wet Bulb Globe Temperature
   wbgtRisk: RiskLevel;
-  heatIndex: number; // °C — Heat Index
+  heatIndex: number | null; // °C — Heat Index
   heatIndexRisk: RiskLevel;
   meanRadiantTemp: number; // °C — Mean Radiant Temperature
 }
