@@ -21,25 +21,25 @@ export interface ForecastDayEnvironmental {
   humidity: number; // %
   windSpeed: number; // m/s
   solarRadiation: number; // W/m²
-  meanRadiantTemp: number; // °C (Mean Radiant Temperature)
+  meanRadiantTemp: number | null; // °C — null when not computed
 }
 
 /** Core PS83 human thermal-stress indicators for a single day. */
 export interface ForecastThermalStress {
   utci: number; // °C
   utciRisk: RiskLevel;
-  wbgt: number; // °C
-  wbgtRisk: RiskLevel;
-  heatIndex: number; // °C
-  heatIndexRisk: RiskLevel;
+  wbgt: number | null; // °C — null when backend sensor unavailable
+  wbgtRisk: RiskLevel | null;
+  heatIndex: number | null; // °C — null when backend sensor unavailable
+  heatIndexRisk: RiskLevel | null;
 }
 
 /** Population / health-risk outlook associated with a single day. */
 export interface ForecastHealthOutlook {
   vulnerabilityScore: number; // 0-100
   populationExposed: number; // people
-  mortalityRisk: RiskLevel;
-  hospitalizationRisk: RiskLevel;
+  mortalityRisk: RiskLevel | null; // null when backend model not available
+  hospitalizationRisk: RiskLevel | null; // null when backend model not available
   heatHealthConcern: RiskLevel;
   advisory: string; // short operational advisory text
 }

@@ -29,10 +29,10 @@ const HeatRelatedHealthImpact = ({ impact }: HeatRelatedHealthImpactProps) => {
             <p className={TYPOGRAPHY.metricLabel}>Heat Illness Cases</p>
           </div>
           <p className={`mt-2 text-3xl font-bold text-red-900 dark:text-red-100`}>
-            {impact.heatIllnessCases.toLocaleString('en-IN')}
+            {impact.heatIllnessCases != null ? impact.heatIllnessCases.toLocaleString('en-IN') : '—'}
           </p>
           <p className={`mt-1 ${TYPOGRAPHY.bodySmall} text-red-700 dark:text-red-300`}>
-            Estimated heat-illness risk per day (demo)
+            Estimated heat-illness risk per day
           </p>
         </Card>
 
@@ -42,10 +42,12 @@ const HeatRelatedHealthImpact = ({ impact }: HeatRelatedHealthImpactProps) => {
             <p className={TYPOGRAPHY.metricLabel}>Hospitalization Risk</p>
           </div>
           <div className="mt-2">
-            <RiskBadge level={impact.hospitalizationRisk} size="md" />
+            {impact.hospitalizationRisk != null
+              ? <RiskBadge level={impact.hospitalizationRisk} size="md" />
+              : <span className="text-sm text-gray-500 dark:text-gray-400">Not available</span>}
           </div>
           <p className={`mt-1 ${TYPOGRAPHY.bodySmall} text-orange-700 dark:text-orange-300`}>
-            Estimated heat-related admission risk (demo)
+            Estimated heat-related admission risk
           </p>
         </Card>
 
@@ -55,10 +57,12 @@ const HeatRelatedHealthImpact = ({ impact }: HeatRelatedHealthImpactProps) => {
             <p className={TYPOGRAPHY.metricLabel}>Mortality Risk</p>
           </div>
           <div className="mt-2">
-            <RiskBadge level={impact.mortalityRisk} size="md" />
+            {impact.mortalityRisk != null
+              ? <RiskBadge level={impact.mortalityRisk} size="md" />
+              : <span className="text-sm text-gray-500 dark:text-gray-400">Not available</span>}
           </div>
           <p className={`mt-1 ${TYPOGRAPHY.bodySmall} text-purple-700 dark:text-purple-300`}>
-            Estimated heat-related mortality risk indicator (demo)
+            Estimated heat-related mortality risk indicator
           </p>
         </Card>
 

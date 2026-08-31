@@ -51,17 +51,17 @@ export interface EnvironmentalMetrics {
 export interface ThermalStressMetrics {
   utci: number; // °C
   utciRisk: RiskLevel;
-  wbgt: number; // °C
-  wbgtRisk: RiskLevel;
-  heatIndex: number; // °C
-  heatIndexRisk: RiskLevel;
-  meanRadiantTemp?: number; // °C
+  wbgt: number | null; // °C — null when backend sensor unavailable
+  wbgtRisk: RiskLevel | null;
+  heatIndex: number | null; // °C — null when backend sensor unavailable
+  heatIndexRisk: RiskLevel | null;
+  meanRadiantTemp?: number | null; // °C
 }
 
 export interface HealthImpact {
   vulnerabilityScore: number; // 0-100
-  mortalityRisk: RiskLevel;
-  hospitalizationRisk: RiskLevel;
+  mortalityRisk: RiskLevel | null; // null when backend model not available
+  hospitalizationRisk: RiskLevel | null; // null when backend model not available
   populationExposed: number;
 }
 

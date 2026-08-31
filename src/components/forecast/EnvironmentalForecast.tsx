@@ -88,8 +88,12 @@ const EnvironmentalForecast = ({ days }: EnvironmentalForecastProps) => {
                     <DataValue value={day.environmental.solarRadiation} metric="solarRadiation" />
                   </td>
                   <td className="px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {day.environmental.meanRadiantTemp.toFixed(1)}
-                    <span className="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">°C</span>
+                    {day.environmental.meanRadiantTemp != null
+                      ? `${day.environmental.meanRadiantTemp.toFixed(1)}`
+                      : '—'}
+                    {day.environmental.meanRadiantTemp != null && (
+                      <span className="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">°C</span>
+                    )}
                   </td>
                 </tr>
               ))}

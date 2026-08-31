@@ -40,18 +40,18 @@ export interface PopulationVulnerability {
   vulnerabilityScore: number; // 0-100
   populationExposed: number; // people
   highRiskPopulation: number; // people
-  elderlyAtRisk: number; // people
-  childrenAtRisk: number; // people
-  outdoorWorkerExposure: number; // people
+  elderlyAtRisk: number | null; // people — null when backend model not available
+  childrenAtRisk: number | null; // people — null when backend model not available
+  outdoorWorkerExposure: number | null; // people — null when backend model not available
 }
 
 /** Heat-related health-impact indicators (demonstration values only). */
 export interface HealthImpactIndicators {
-  heatIllnessCases: number; // estimated heat illness / heat stroke case risk
-  hospitalizationRisk: RiskLevel;
-  mortalityRisk: RiskLevel;
+  heatIllnessCases: number | null; // null when backend model not available
+  hospitalizationRisk: RiskLevel | null; // null when backend model not available
+  mortalityRisk: RiskLevel | null; // null when backend model not available
   emergencyHealthRisk: RiskLevel;
-  populationNeedingProtection: number; // people
+  populationNeedingProtection: number;
 }
 
 /** A single point in the thermal-stress ↔ health-relationship series. */
@@ -60,7 +60,7 @@ export interface ThermalHealthRelationshipPoint {
   date: string; // ISO date (YYYY-MM-DD)
   weekday: string;
   utci: number; // °C
-  wbgt: number; // °C
+  wbgt: number | null; // °C — null when backend sensor unavailable
   temperature: number; // °C
   healthRisk: RiskLevel; // aggregated health-risk level for the day
   vulnerableAtRisk: number; // people in the demonstration window

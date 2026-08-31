@@ -45,7 +45,11 @@ const HealthImpact = ({ impact }: HealthImpactProps) => {
             <p className="text-xs font-medium text-red-700 uppercase tracking-wide dark:text-red-300">
               Mortality Risk
             </p>
-            <RiskBadge level={impact.mortalityRisk} size="md" />
+            {impact.mortalityRisk != null ? (
+              <RiskBadge level={impact.mortalityRisk} size="md" />
+            ) : (
+              <span className="text-sm text-gray-500 dark:text-gray-400">Not available</span>
+            )}
           </div>
         </div>
 
@@ -58,7 +62,11 @@ const HealthImpact = ({ impact }: HealthImpactProps) => {
             <p className="text-xs font-medium text-orange-700 uppercase tracking-wide dark:text-orange-300">
               Hospitalization Risk
             </p>
-            <RiskBadge level={impact.hospitalizationRisk} size="md" />
+            {impact.hospitalizationRisk != null ? (
+              <RiskBadge level={impact.hospitalizationRisk} size="md" />
+            ) : (
+              <span className="text-sm text-gray-500 dark:text-gray-400">Not available</span>
+            )}
           </div>
         </div>
 
@@ -79,7 +87,7 @@ const HealthImpact = ({ impact }: HealthImpactProps) => {
       </div>
 
       <p className="mt-4 text-xs text-purple-700 italic dark:text-purple-300">
-        Demonstration scenario values
+        Mortality and hospitalization risk model pending backend integration
       </p>
     </Card>
   );

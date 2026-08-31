@@ -65,12 +65,16 @@ const HealthForecast = ({ days }: HealthForecastProps) => {
               <HealthStatRisk
                 icon={<HeartPulse className="h-3.5 w-3.5" aria-hidden="true" />}
                 label="Mortality Risk"
-                badge={<RiskBadge level={day.health.mortalityRisk} size="sm" />}
+                badge={day.health.mortalityRisk != null
+                  ? <RiskBadge level={day.health.mortalityRisk} size="sm" />
+                  : <span className="text-xs text-gray-500 dark:text-gray-400">Not available</span>}
               />
               <HealthStatRisk
                 icon={<Building2 className="h-3.5 w-3.5" aria-hidden="true" />}
                 label="Hospitalization Risk"
-                badge={<RiskBadge level={day.health.hospitalizationRisk} size="sm" />}
+                badge={day.health.hospitalizationRisk != null
+                  ? <RiskBadge level={day.health.hospitalizationRisk} size="sm" />
+                  : <span className="text-xs text-gray-500 dark:text-gray-400">Not available</span>}
               />
             </dl>
 

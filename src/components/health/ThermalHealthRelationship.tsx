@@ -219,7 +219,7 @@ const ThermalHealthRelationship = ({ relationship }: ThermalHealthRelationshipPr
                     {point.utci.toFixed(1)} °C
                   </td>
                   <td className="px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {point.wbgt.toFixed(1)} °C
+                    {point.wbgt != null ? `${point.wbgt.toFixed(1)} °C` : '—'}
                   </td>
                   <td className="px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-gray-100">
                     {point.temperature.toFixed(1)} °C

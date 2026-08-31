@@ -218,8 +218,12 @@ const ThermalStressForecast = ({ days }: ThermalStressForecastProps) => {
                   <td className="px-4 py-2.5">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {day.environmental.meanRadiantTemp.toFixed(1)}
-                        <span className="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">°C</span>
+                        {day.environmental.meanRadiantTemp != null
+                          ? `${day.environmental.meanRadiantTemp.toFixed(1)}`
+                          : '—'}
+                        {day.environmental.meanRadiantTemp != null && (
+                          <span className="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">°C</span>
+                        )}
                       </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">radiant load</p>
                     </div>
@@ -237,11 +241,11 @@ const ThermalStressForecast = ({ days }: ThermalStressForecastProps) => {
   );
 };
 
-const ThermalCell = ({ value, risk }: { value: ReactNode; risk: RiskLevel }) => (
+const ThermalCell = ({ value, risk }: { value: ReactNode; risk: RiskLevel | null }) => (
   <td className="px-4 py-2.5">
     <div className="space-y-1">
       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{value}</p>
-      <RiskBadge level={risk} size="sm" />
+      {risk != null ? <RiskBadge level={risk} size="sm" /> : <span className="text-xs text-gray-500 dark:text-gray-400">Not available</span>}
     </div>
   </td>
 );

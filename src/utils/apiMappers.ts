@@ -18,6 +18,7 @@ export function mapAlertOutToAlert(a: any) {
     area: a.zone_code ?? 'Citywide',
     affectedWards: a.zone_code ? [a.zone_code] : [],
     description: a.alert_message,
+    message: a.alert_message,
     trigger: {
       temperature: 0, // not provided by backend AlertOut
       humidity: 0,    // not provided by backend AlertOut
@@ -30,6 +31,7 @@ export function mapAlertOutToAlert(a: any) {
     },
     recommendedAction: a.recommended_action ?? 'Not provided',
     status: a.status,
+    isActive: a.status === 'pending' || a.status === 'sent',
     priority: 'medium' as const,
     intendedAudience: ['general-public'] as const,
     geographicScope: (a.zone_code ? 'ward' : 'citywide') as 'ward' | 'multi-ward' | 'citywide',

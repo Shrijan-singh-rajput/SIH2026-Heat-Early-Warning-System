@@ -50,11 +50,17 @@ const ThermalStressMetrics = ({ metrics }: ThermalStressMetricsProps) => {
             <Activity className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden="true" />
           </div>
           <div className="space-y-2">
-            <div>
-              <span className="text-3xl font-bold text-gray-900 dark:text-gray-50">{metrics.wbgt.toFixed(1)}</span>
-              <span className="text-lg text-gray-500 ml-1 dark:text-gray-400">°C</span>
-            </div>
-            <RiskBadge level={metrics.wbgtRisk} size="md" />
+            {metrics.wbgt != null ? (
+              <>
+                <div>
+                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-50">{metrics.wbgt.toFixed(1)}</span>
+                  <span className="text-lg text-gray-500 ml-1 dark:text-gray-400">°C</span>
+                </div>
+                {metrics.wbgtRisk != null && <RiskBadge level={metrics.wbgtRisk} size="md" />}
+              </>
+            ) : (
+              <p className="text-2xl font-medium text-gray-400 dark:text-gray-500">—</p>
+            )}
             <p className="text-sm text-gray-700 mt-2 dark:text-gray-300">High occupational heat stress</p>
           </div>
         </Card>
@@ -69,17 +75,23 @@ const ThermalStressMetrics = ({ metrics }: ThermalStressMetricsProps) => {
             <Activity className="h-5 w-5 text-red-600 dark:text-red-400" aria-hidden="true" />
           </div>
           <div className="space-y-2">
-            <div>
-              <span className="text-3xl font-bold text-gray-900 dark:text-gray-50">{metrics.heatIndex.toFixed(1)}</span>
-              <span className="text-lg text-gray-500 ml-1 dark:text-gray-400">°C</span>
-            </div>
-            <RiskBadge level={metrics.heatIndexRisk} size="md" />
+            {metrics.heatIndex != null ? (
+              <>
+                <div>
+                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-50">{metrics.heatIndex.toFixed(1)}</span>
+                  <span className="text-lg text-gray-500 ml-1 dark:text-gray-400">°C</span>
+                </div>
+                {metrics.heatIndexRisk != null && <RiskBadge level={metrics.heatIndexRisk} size="md" />}
+              </>
+            ) : (
+              <p className="text-2xl font-medium text-gray-400 dark:text-gray-500">—</p>
+            )}
             <p className="text-sm text-gray-700 mt-2 dark:text-gray-300">Dangerous apparent heat conditions</p>
           </div>
         </Card>
       </div>
 
-      {metrics.meanRadiantTemp && (
+      {metrics.meanRadiantTemp != null && metrics.meanRadiantTemp > 0 && (
         <div className="mt-3">
           <Card padding="sm" className="bg-gray-50 dark:bg-gray-900/50">
             <p className="text-sm text-gray-700 dark:text-gray-300">
