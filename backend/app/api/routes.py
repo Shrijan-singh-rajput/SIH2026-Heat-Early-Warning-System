@@ -1,5 +1,3 @@
-"""FastAPI routes for the SIH PS83 heat-health platform."""
-
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -353,6 +351,15 @@ async def get_vulnerability(
                 "zone_name": zone.zone_name,
                 "total_population": (
                     vuln.total_population if vuln else None
+                ),
+                "elderly_population": (
+                    vuln.elderly_population if vuln else None
+                ),
+                "children_population": (
+                    vuln.children_population if vuln else None
+                ),
+                "outdoor_worker_population": (
+                    vuln.outdoor_worker_population if vuln else None
                 ),
                 "population_density_per_km2": (
                     vuln.population_density_per_km2

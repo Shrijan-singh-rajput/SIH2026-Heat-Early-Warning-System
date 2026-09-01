@@ -29,7 +29,7 @@ export function useForecast() {
         }
 
         // REAL MODE
-        const result = await forecastService.getForecastCollection();
+        const result = await forecastService.getMultiDayForecast();
 
         if (active) {
           setData(result);

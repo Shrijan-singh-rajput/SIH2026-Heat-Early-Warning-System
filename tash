@@ -1,0 +1,186 @@
+[1mdiff --git a/backend/app/services/queries.py b/backend/app/services/queries.py[m
+[1mindex 80fc586..311eb8e 100644[m
+[1m--- a/backend/app/services/queries.py[m
+[1m+++ b/backend/app/services/queries.py[m
+[36m@@ -122,16 +122,27 @@[m [masync def thermal_history([m
+     return list(result.scalars().all())[m
+ [m
+ [m
+[32m+[m[32ma# After[m
+ async def zone_forecast_risks([m
+     session: AsyncSession,[m
+     zone_id: int,[m
+ ) -> list[RiskPrediction]:[m
+[32m+[m[32m    latest_generation = await session.scalar([m
+[32m+[m[32m        select(func.max(RiskPrediction.prediction_generated_at)).where([m
+[32m+[m[32m            RiskPrediction.zone_id == zone_id,[m
+[32m+[m[32m            RiskPrediction.model_version == FORECAST_MODEL_VERSION,[m
+[32m+[m[32m        )[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    if latest_generation is None:[m
+[32m+[m[32m        return [][m
+[32m+[m
+     result = await session.execute([m
+         select(RiskPrediction)[m
+         .where([m
+             RiskPrediction.zone_id == zone_id,[m
+[31m-            RiskPrediction.model_version[m
+[31m-            == FORECAST_MODEL_VERSION,[m
+[32m+[m[32m            RiskPrediction.model_version == FORECAST_MODEL_VERSION,[m
+[32m+[m[32m            RiskPrediction.prediction_generated_at == latest_generation,[m
+         )[m
+         .order_by(RiskPrediction.prediction_for)[m
+     )[m
+[1mdiff --git a/backend/scripts/calculate_forecast_thermal_indices.py b/backend/scripts/calculate_forecast_thermal_indices.py[m
+[1mindex 76060f0..081afaf 100644[m
+[1m--- a/backend/scripts/calculate_forecast_thermal_indices.py[m
+[1m+++ b/backend/scripts/calculate_forecast_thermal_indices.py[m
+[36m@@ -5,7 +5,7 @@[m [mfrom math import isnan[m
+ import numpy as np[m
+ from pythermalcomfort.models import utci[m
+ from sqlalchemy import func, select[m
+[31m-[m
+[32m+[m[32mfrom sqlalchemy.dialects.postgresql import insert[m
+ from app.db.session import AsyncSessionLocal, engine[m
+ from app.models.thermal import ThermalIndex[m
+ from app.models.weather import WeatherForecast[m
+[36m@@ -107,29 +107,7 @@[m [masync def main() -> None:[m
+         shade_utci, shade_categories = vector_utci(temperatures)[m
+         sun_utci, sun_categories = vector_utci(temperatures + deltas)[m
+ [m
+[31m-        existing_result = await session.execute([m
+[31m-            select([m
+[31m-                ThermalIndex.station_id,[m
+[31m-                ThermalIndex.valid_for,[m
+[31m-                ThermalIndex.calculation_type,[m
+[31m-            ).where([m
+[31m-                ThermalIndex.calculation_type.in_([m
+[31m-                    [[m
+[31m-                        CALCULATION_TYPES[Scenario.REFERENCE_SHADE],[m
+[31m-                        CALCULATION_TYPES[Scenario.SUN_EXPOSED],[m
+[31m-                    ][m
+[31m-                )[m
+[31m-            )[m
+[31m-        )[m
+ [m
+[31m-        existing_keys = set([m
+[31m-            ([m
+[31m-                row.station_id,[m
+[31m-                row.valid_for,[m
+[31m-                row.calculation_type,[m
+[31m-            )[m
+[31m-            for row in existing_result.all()[m
+[31m-        )[m
+ [m
+         scenario_data = [[m
+             ([m
+[36m@@ -146,14 +124,28 @@[m [masync def main() -> None:[m
+             ),[m
+         ][m
+ [m
+[31m-        inserted = 0[m
+[31m-        already_existing = 0[m
+[32m+[m[32m        written = 0[m
+         invalid = 0[m
+         wind_lower_adjustments = int([m
+             np.sum(winds < LOWER_WIND_APPLICABILITY)[m
+         )[m
+ [m
+[31m-        pending = [][m
+[32m+[m[32m        pending: list[dict] = [][m
+[32m+[m
+[32m+[m[32m        async def flush(rows: list[dict]) -> None:[m
+[32m+[m[32m            if not rows:[m
+[32m+[m[32m                return[m
+[32m+[m[32m            statement = insert(ThermalIndex).values(rows)[m
+[32m+[m[32m            statement = statement.on_conflict_do_update([m
+[32m+[m[32m                constraint="uq_thermal_index_station_time_type",[m
+[32m+[m[32m                set_={[m
+[32m+[m[32m                    "calculated_at": statement.excluded.calculated_at,[m
+[32m+[m[32m                    "utci_c": statement.excluded.utci_c,[m
+[32m+[m[32m                    "thermal_risk_level": statement.excluded.thermal_risk_level,[m
+[32m+[m[32m                    "methodology": statement.excluded.methodology,[m
+[32m+[m[32m                },[m
+[32m+[m[32m            )[m
+[32m+[m[32m            await session.execute(statement)[m
+ [m
+         for scenario, calc_type, utci_values, categories in scenario_data:[m
+ [m
+[36m@@ -165,41 +157,29 @@[m [masync def main() -> None:[m
+                     invalid += 1[m
+                     continue[m
+ [m
+[31m-                key = ([m
+[31m-                    int(station_ids[index]),[m
+[31m-                    timestamps[index],[m
+[31m-                    calc_type,[m
+[31m-                )[m
+[31m-[m
+[31m-                if key in existing_keys:[m
+[31m-                    already_existing += 1[m
+[31m-                    continue[m
+[31m-[m
+                 pending.append([m
+[31m-                    ThermalIndex([m
+[31m-                        station_id=int(station_ids[index]),[m
+[31m-                        calculated_at=latest_generation,[m
+[31m-                        valid_for=timestamps[index],[m
+[31m-                        utci_c=value,[m
+[31m-                        thermal_risk_level=str(categories[index]),[m
+[31m-                        calculation_type=calc_type,[m
+[31m-                        methodology=methodology_text([m
+[32m+[m[32m                    {[m
+[32m+[m[32m                        "station_id": int(station_ids[index]),[m
+[32m+[m[32m                        "calculated_at": latest_generation,[m
+[32m+[m[32m                        "valid_for": timestamps[index],[m
+[32m+[m[32m                        "utci_c": value,[m
+[32m+[m[32m                        "thermal_risk_level": str(categories[index]),[m
+[32m+[m[32m                        "calculation_type": calc_type,[m
+[32m+[m[32m                        "methodology": methodology_text([m
+                             scenario,[m
+                             "Forecast",[m
+                         ),[m
+[31m-                    )[m
+[32m+[m[32m                    }[m
+                 )[m
+ [m
+[31m-                inserted += 1[m
+[32m+[m[32m                written += 1[m
+ [m
+                 if len(pending) >= BATCH_SIZE:[m
+[31m-                    session.add_all(pending)[m
+[32m+[m[32m                    await flush(pending)[m
+                     pending = [][m
+                     await session.commit()[m
+ [m
+[31m-        if pending:[m
+[31m-            session.add_all(pending)[m
+[31m-[m
+[32m+[m[32m        await flush(pending)[m
+         await session.commit()[m
+         await engine.dispose()[m
+ [m
+[36m@@ -208,8 +188,7 @@[m [masync def main() -> None:[m
+     print("--------------------------------------------")[m
+     print(f"Forecast generation: {latest_generation.isoformat()}")[m
+     print(f"Forecast hours processed: {count}")[m
+[31m-    print(f"Thermal records inserted: {inserted}")[m
+[31m-    print(f"Already-existing records: {already_existing}")[m
+[32m+[m[32m    print(f"Thermal records written (inserted or refreshed): {written}")[m
+     print(f"Invalid/skipped calculations: {invalid}")[m
+     print(f"Wind lower-bound adjustments: {wind_lower_adjustments}")[m
+ [m
+[1mdiff --git a/src/hooks/useForecast.ts b/src/hooks/useForecast.ts[m
+[1mindex 79c1b97..a818352 100644[m
+[1m--- a/src/hooks/useForecast.ts[m
+[1m+++ b/src/hooks/useForecast.ts[m
+[36m@@ -1,41 +1,72 @@[m
+ import { useEffect, useState } from 'react';[m
+[32m+[m
+ import { useDataMode } from '../context/DataModeContext';[m
+[32m+[m
+ import { fetchDemoForecast } from '../services/demoForecastService';[m
+ import { forecastService } from '../services/forecastService';[m
+[32m+[m
+ import type { ForecastCollection } from '../typ

@@ -672,10 +672,20 @@ export const forecastService = {
 
       /*
        * Build the five ForecastDay objects.
+       *
+       * NOTE: this used to be `targetDates.map((date, index) => {...})`
+       * assigned directly to `const forecastDays`. Inside that callback,
+       * a later line reads `forecastDays[index - 1]` to compute the
+       * day-over-day trend — but `forecastDays` doesn't finish being
+       * initialized until the whole .map() call returns, so referencing
+       * it from inside its own initializer threw a TDZ ReferenceError
+       * ("Cannot access 'forecastDays' before initialization").
+       * Building it imperatively avoids the self-reference: by the time
+       * each iteration runs, `forecastDays` is already a real array.
        */
-      const forecastDays: ForecastDay[] =
-        targetDates.map(
-          (date, index) => {
+      const forecastDays: ForecastDay[] = [];
+
+      for (const [index, date] of targetDates.entries()) {
             const weatherPoints =
               weatherByDate.get(date) ?? [];
 
@@ -906,7 +916,7 @@ export const forecastService = {
                     ?.risk ?? null
                 : null;
 
-            return {
+            forecastDays.push({
               dayLabel: `Day ${
                 index + 1
               }`,
@@ -990,9 +1000,8 @@ export const forecastService = {
                     overallRisk,
                   ),
               },
-            };
-          },
-        );
+            });
+      }
 
       const recommendations =
         makeRecommendations(

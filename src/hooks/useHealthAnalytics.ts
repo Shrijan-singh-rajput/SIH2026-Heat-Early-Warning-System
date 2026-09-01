@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDataMode } from '../context/DataModeContext';
 import { fetchDemoHealthAnalytics } from '../services/demoHealthAnalyticsService';
+import { fetchRealHealthAnalytics } from '../services/healthAnalyticsService';
 import type { HealthAnalytics } from '../types/healthAnalyticsTypes';
 
 /**
@@ -8,7 +9,8 @@ import type { HealthAnalytics } from '../types/healthAnalyticsTypes';
  *
  * Reads the current data mode from DataModeContext.
  * In "demo" mode, returns simulated health analytics data.
- * In "real" mode, returns null (backend not connected).
+ * In "real" mode, derives HealthAnalytics from the live backend via
+ * healthAnalyticsService (same underlying endpoints as the Forecast page).
  */
 export function useHealthAnalytics() {
   const { dataMode } = useDataMode();
@@ -34,7 +36,18 @@ export function useHealthAnalytics() {
           if (active) setIsLoading(false);
         });
     } else {
-      setIsLoading(false);
+      fetchRealHealthAnalytics()
+        .then((result) => {
+          if (!active) return;
+          setData(result);
+        })
+        .catch((error) => {
+          console.error('Failed to load health analytics:', error);
+          if (active) setData(null);
+        })
+        .finally(() => {
+          if (active) setIsLoading(false);
+        });
     }
 
     return () => {
@@ -48,6 +61,6 @@ export function useHealthAnalytics() {
     isDemo: dataMode === 'demo',
     scenario: dataMode === 'demo'
       ? (data?.metadata.scenario ?? '')
-      : 'Real Mode — Backend Not Connected',
+      : (data?.metadata.scenario ?? 'Real Mode — Backend Connected'),
   };
 }
