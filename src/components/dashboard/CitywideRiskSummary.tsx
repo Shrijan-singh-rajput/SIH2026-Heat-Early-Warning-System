@@ -54,9 +54,9 @@ const CitywideRiskSummary = ({
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                ~{(vulnerablePopulation / 1000).toFixed(0)}k
+                {vulnerablePopulation.toLocaleString('en-IN')}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">vulnerable population</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">total population covered</p>
             </div>
           </div>
         </div>

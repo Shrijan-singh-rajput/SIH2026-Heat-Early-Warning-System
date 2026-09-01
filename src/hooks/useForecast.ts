@@ -1,41 +1,53 @@
 import { useEffect, useState } from 'react';
 import { useDataMode } from '../context/DataModeContext';
 import { fetchDemoForecast } from '../services/demoForecastService';
+import { forecastService } from '../services/forecastService';
 import type { ForecastCollection } from '../types/forecastTypes';
 
-/**
- * useForecast — data hook for the Detailed 5-Day Forecast page.
- *
- * Reads the current data mode from DataModeContext.
- * In "demo" mode, returns simulated forecast data.
- * In "real" mode, returns null (backend not connected).
- */
 export function useForecast() {
   const { dataMode } = useDataMode();
+
   const [data, setData] = useState<ForecastCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
 
-    setData(null);
-    setIsLoading(true);
+    async function loadForecast() {
+      setData(null);
+      setIsLoading(true);
 
-    if (dataMode === 'demo') {
-      fetchDemoForecast()
-        .then((result) => {
-          if (!active) return;
+      try {
+        if (dataMode === 'demo') {
+          const result = await fetchDemoForecast();
+
+          if (active) {
+            setData(result);
+          }
+
+          return;
+        }
+
+        // REAL MODE
+        const result = await forecastService.getForecastCollection();
+
+        if (active) {
           setData(result);
-        })
-        .catch((error) => {
-          console.error('Failed to load forecast:', error);
-        })
-        .finally(() => {
-          if (active) setIsLoading(false);
-        });
-    } else {
-      setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to load forecast:', error);
+
+        if (active) {
+          setData(null);
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
     }
+
+    loadForecast();
 
     return () => {
       active = false;
@@ -46,8 +58,9 @@ export function useForecast() {
     data,
     isLoading,
     isDemo: dataMode === 'demo',
-    scenario: dataMode === 'demo'
-      ? (data?.metadata.scenario ?? '')
-      : 'Real Mode — Backend Not Connected',
+    scenario:
+      dataMode === 'demo'
+        ? (data?.metadata.scenario ?? '')
+        : 'Real Mode — Backend Connected',
   };
 }

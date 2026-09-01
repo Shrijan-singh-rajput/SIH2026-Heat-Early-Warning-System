@@ -70,24 +70,24 @@ const HealthImpact = ({ impact }: HealthImpactProps) => {
           </div>
         </div>
 
-        {/* Population Exposed */}
+        {/* Population Covered */}
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center dark:bg-purple-900/50">
             <Users className="h-6 w-6 text-purple-600 dark:text-purple-300" aria-hidden="true" />
           </div>
           <div>
             <p className="text-xs font-medium text-purple-700 uppercase tracking-wide dark:text-purple-300">
-              Population Exposed
+              Population Covered
             </p>
             <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-              ~{(impact.populationExposed / 1000).toFixed(0)}k
+              {impact.populationExposed.toLocaleString('en-IN')}
             </p>
           </div>
         </div>
       </div>
 
       <p className="mt-4 text-xs text-purple-700 italic dark:text-purple-300">
-        Mortality and hospitalization risk model pending backend integration
+        Mortality and hospitalization risk estimates are not currently available.
       </p>
     </Card>
   );
